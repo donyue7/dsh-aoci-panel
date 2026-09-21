@@ -1,7 +1,7 @@
 # dsh-aoci-panel
 
 给 [DeepSeek Harness](https://github.com/deepseek-ai)（DSH）用的 AOCI 认知面板插件：在会话视图标签栏
-（`对话 / 轨迹 / 上下文`）后面加一个 **`AOCI`** 标签，点开即可看到当前项目的 AOCI 认知索引概览、
+加一个 **`AOCI`** 标签，点开即可看到当前项目的 AOCI 认知索引概览、
 治理状态与条目浏览。
 
 ## 功能
