@@ -1,0 +1,58 @@
+name: Publish Package
+
+# 受信发布（OIDC trusted publishing）：不需要任何长期 npm token，也不需要 6 位动态码。
+#
+# 前置条件（在 npmjs.com 上为 dsh-aoci-panel 配置一次 Trusted Publisher）：
+#   Provider        : GitHub Actions
+#   Org or user     : donyue7
+#   Repository      : dsh-aoci-panel
+#   Workflow filename: publish.yml
+#   Allowed actions : 勾选 "npm publish"（新配置默认只允许 npm stage publish）
+#
+# 发布方式：
+#   1) 打 tag：git tag v0.1.1 && git push origin v0.1.1
+#   2) 或在仓库 Actions 页面手动 Run workflow（workflow_dispatch）
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # OIDC 受信发布必需
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false   # 发布构建一律禁用缓存
+
+      - name: 准备工具链（受信发布需要 npm >= 11.5.1）
+        run: |
+          node -v
+          npm install -g npm@^11
+          npm -v
+
+      - name: 检查该版本是否已发布
+        id: check
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "dsh-aoci-panel@${VERSION}" version >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "dsh-aoci-panel@${VERSION} 已存在于 registry，跳过发布。"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "准备发布 dsh-aoci-panel@${VERSION}"
+          fi
+
+      - name: 发布到 npm（OIDC 鉴权，自动生成 provenance）
+        if: steps.check.outputs.skip == 'false'
+        run: npm publish
