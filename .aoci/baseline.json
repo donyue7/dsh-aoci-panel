@@ -1,12 +1,17 @@
 {
   "version": 1,
   "created_at": "2026-09-21T10:59:07Z",
-  "updated_at": "2026-09-21T11:02:43Z",
+  "updated_at": "2026-09-22T11:13:18Z",
   "files": {
     ".gitattributes": {
       "sha256": "21fa16a2122e2b0360b47502c577428b645437e08e9e87ffba661f84853cb476",
       "size": 291,
       "normalized_sha256": "21fa16a2122e2b0360b47502c577428b645437e08e9e87ffba661f84853cb476"
+    },
+    ".github/workflows/publish.yml": {
+      "sha256": "a274ae9ae0ae55b0937db97fe3e3d66ce9fc3402a8376b8db749e09966755c4d",
+      "size": 1833,
+      "normalized_sha256": "a274ae9ae0ae55b0937db97fe3e3d66ce9fc3402a8376b8db749e09966755c4d"
     },
     ".gitignore": {
       "sha256": "a59ff4db3b514037eac5f3b6bb95a4d4ca60fc55754456f3dfb32313a6ca57dd",
@@ -24,14 +29,14 @@
       "normalized_sha256": "f7f1093d1931ba37008efa8c8417435e7a497f20731189b97171252ea29dd26c"
     },
     "README.md": {
-      "sha256": "ceab57a02b309b41d1c448c93c5e091f08d110ec10dd3fdf16afc013a9b648c9",
-      "size": 5934,
-      "normalized_sha256": "ceab57a02b309b41d1c448c93c5e091f08d110ec10dd3fdf16afc013a9b648c9"
+      "sha256": "985eead6a65e8a6f78e1f249781e1148f970b5acfedebba5f0c1f280b930cbb5",
+      "size": 9203,
+      "normalized_sha256": "985eead6a65e8a6f78e1f249781e1148f970b5acfedebba5f0c1f280b930cbb5"
     },
     "aoci.code.txt": {
-      "sha256": "6a7585b7707aee662abd540a701cc1ccb4e4ee3a68e51a2665306aa3cbe1c455",
-      "size": 4912,
-      "normalized_sha256": "6a7585b7707aee662abd540a701cc1ccb4e4ee3a68e51a2665306aa3cbe1c455"
+      "sha256": "7753769745e61162b37cfc10f9ea8e78c0ad287599c787fd2b47934908481439",
+      "size": 7084,
+      "normalized_sha256": "7753769745e61162b37cfc10f9ea8e78c0ad287599c787fd2b47934908481439"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -61,14 +66,19 @@
       "normalized_sha256": "5de833ac5fdf6c6a5097c663aff9c9c5360964939dda5477d5aceceefc475a65"
     },
     "package.json": {
-      "sha256": "78941fe3d3fe8a2775928a5ff50502d26c17d43a1ac55612472df4a525f04f70",
-      "size": 1053,
-      "normalized_sha256": "78941fe3d3fe8a2775928a5ff50502d26c17d43a1ac55612472df4a525f04f70"
+      "sha256": "277c534326dcf84f20c0ed4e5cfc8ab88a3b2d00f215a142d857ece1da6e35dc",
+      "size": 1342,
+      "normalized_sha256": "277c534326dcf84f20c0ed4e5cfc8ab88a3b2d00f215a142d857ece1da6e35dc"
+    },
+    "scripts/check.ps1": {
+      "sha256": "fba6f0281bd8d8f99a4dd8994e033e99bbd3a4b65881a699a1cd1959cdac795c",
+      "size": 9715,
+      "normalized_sha256": "fba6f0281bd8d8f99a4dd8994e033e99bbd3a4b65881a699a1cd1959cdac795c"
     },
     "scripts/install.ps1": {
-      "sha256": "dd9b07f0d114871749cd5da7ce3fe170e56c6449087fee5ef29b1919a1b24cc3",
-      "size": 3379,
-      "normalized_sha256": "dd9b07f0d114871749cd5da7ce3fe170e56c6449087fee5ef29b1919a1b24cc3"
+      "sha256": "cedff0c65a766f9bc5e19837fa0d3f9819938bf3332887fb663da8901cbebbaa",
+      "size": 6996,
+      "normalized_sha256": "cedff0c65a766f9bc5e19837fa0d3f9819938bf3332887fb663da8901cbebbaa"
     }
   },
   "managed_scope": {
