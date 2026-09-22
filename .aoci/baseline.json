@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "created_at": "2026-09-21T10:59:07Z",
+  "updated_at": "2026-09-21T11:02:43Z",
+  "files": {
+    ".gitattributes": {
+      "sha256": "21fa16a2122e2b0360b47502c577428b645437e08e9e87ffba661f84853cb476",
+      "size": 291,
+      "normalized_sha256": "21fa16a2122e2b0360b47502c577428b645437e08e9e87ffba661f84853cb476"
+    },
+    ".gitignore": {
+      "sha256": "a59ff4db3b514037eac5f3b6bb95a4d4ca60fc55754456f3dfb32313a6ca57dd",
+      "size": 303,
+      "normalized_sha256": "a59ff4db3b514037eac5f3b6bb95a4d4ca60fc55754456f3dfb32313a6ca57dd"
+    },
+    "AGENTS.md": {
+      "sha256": "ddb50101a5be7eb54bde0bdccb2ce15fbac13a0efed1b2851adc248c7a39bcb7",
+      "size": 13258,
+      "normalized_sha256": "ddb50101a5be7eb54bde0bdccb2ce15fbac13a0efed1b2851adc248c7a39bcb7"
+    },
+    "LICENSE": {
+      "sha256": "f7f1093d1931ba37008efa8c8417435e7a497f20731189b97171252ea29dd26c",
+      "size": 1064,
+      "normalized_sha256": "f7f1093d1931ba37008efa8c8417435e7a497f20731189b97171252ea29dd26c"
+    },
+    "README.md": {
+      "sha256": "ceab57a02b309b41d1c448c93c5e091f08d110ec10dd3fdf16afc013a9b648c9",
+      "size": 5934,
+      "normalized_sha256": "ceab57a02b309b41d1c448c93c5e091f08d110ec10dd3fdf16afc013a9b648c9"
+    },
+    "aoci.code.txt": {
+      "sha256": "6a7585b7707aee662abd540a701cc1ccb4e4ee3a68e51a2665306aa3cbe1c455",
+      "size": 4912,
+      "normalized_sha256": "6a7585b7707aee662abd540a701cc1ccb4e4ee3a68e51a2665306aa3cbe1c455"
+    },
+    "aoci.meta.txt": {
+      "role": "index",
+      "sha256": "60ffea0527ae0e1e2b5bf822c119cd3141118cdd33479dec063ee5f9c2114126",
+      "size": 1900,
+      "normalized_sha256": "60ffea0527ae0e1e2b5bf822c119cd3141118cdd33479dec063ee5f9c2114126"
+    },
+    "aoci.txt": {
+      "role": "index",
+      "sha256": "95ec3e59d1f6234f7bacffe1ecd406ed83f1e30fcc74a8ac4f2902c7bfad9023",
+      "size": 303,
+      "normalized_sha256": "95ec3e59d1f6234f7bacffe1ecd406ed83f1e30fcc74a8ac4f2902c7bfad9023"
+    },
+    "cordis.patch.yml": {
+      "sha256": "3a00065634eb9c45a4c70ebffe11476e1ad73cd4d400abb4a13dafc8b29ea63a",
+      "size": 263,
+      "normalized_sha256": "3a00065634eb9c45a4c70ebffe11476e1ad73cd4d400abb4a13dafc8b29ea63a"
+    },
+    "lib/client.js": {
+      "sha256": "31b798821e362a5223437641e50847d276666e2bb45eb63d931c9e5d93c5a9fb",
+      "size": 22840,
+      "normalized_sha256": "31b798821e362a5223437641e50847d276666e2bb45eb63d931c9e5d93c5a9fb"
+    },
+    "lib/index.js": {
+      "sha256": "5de833ac5fdf6c6a5097c663aff9c9c5360964939dda5477d5aceceefc475a65",
+      "size": 22710,
+      "normalized_sha256": "5de833ac5fdf6c6a5097c663aff9c9c5360964939dda5477d5aceceefc475a65"
+    },
+    "package.json": {
+      "sha256": "78941fe3d3fe8a2775928a5ff50502d26c17d43a1ac55612472df4a525f04f70",
+      "size": 1053,
+      "normalized_sha256": "78941fe3d3fe8a2775928a5ff50502d26c17d43a1ac55612472df4a525f04f70"
+    },
+    "scripts/install.ps1": {
+      "sha256": "dd9b07f0d114871749cd5da7ce3fe170e56c6449087fee5ef29b1919a1b24cc3",
+      "size": 3379,
+      "normalized_sha256": "dd9b07f0d114871749cd5da7ce3fe170e56c6449087fee5ef29b1919a1b24cc3"
+    }
+  },
+  "managed_scope": {
+    "version": "managed-scope-baseline/v1",
+    "policy_identity": "81421936ffa2228995783d12046110aa7b7759d131ce244b24bf0a69a61c9264",
+    "observe_change_policy": "review_required",
+    "budget_policy_identity": "15e9b37a6c57e9bf03c9df3d0d049eb5b9a7f5540f9d34960408114e2538a32d",
+    "budget_policy": {
+      "version": "cognition-budget-policy/v1",
+      "mode": "enforce",
+      "whole_index": {
+        "target_tokens": 200000,
+        "warning_tokens": 300000,
+        "max_tokens": 400000
+      },
+      "r": [
+        {
+          "min_c": 1,
+          "max_c": 4,
+          "target_tokens": 25,
+          "max_tokens": 50
+        },
+        {
+          "min_c": 5,
+          "max_c": 7,
+          "target_tokens": 45,
+          "max_tokens": 90
+        },
+        {
+          "min_c": 8,
+          "max_c": 8,
+          "target_tokens": 70,
+          "max_tokens": 140
+        },
+        {
+          "min_c": 9,
+          "max_c": 9,
+          "target_tokens": 90,
+          "max_tokens": 180
+        }
+      ],
+      "s": [
+        {
+          "min_c": 1,
+          "max_c": 4,
+          "target_tokens": 20,
+          "max_tokens": 40
+        },
+        {
+          "min_c": 5,
+          "max_c": 7,
+          "target_tokens": 40,
+          "max_tokens": 80
+        },
+        {
+          "min_c": 8,
+          "max_c": 8,
+          "target_tokens": 70,
+          "max_tokens": 140
+        },
+        {
+          "min_c": 9,
+          "max_c": 9,
+          "target_tokens": 100,
+          "max_tokens": 200
+        }
+      ]
+    },
+    "apply_authorization_mode": "auto"
+  }
+}

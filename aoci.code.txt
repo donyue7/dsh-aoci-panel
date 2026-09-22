@@ -1,0 +1,17 @@
+#AOCI-CODE-VOLUME: 1
+
+===C:/Users/19289/Desktop/dsh-aoci-panel/===
+.gitattributes[FC5T]: F:声明整树文本一律以 LF 检出（* text=auto eol=lf），覆盖 Windows 默认的 autocrlf 重写；二进制自动检测不处理 | R:- | A:- | S:AOCI 基线按原始字节比对：检出若被改写成 CRLF 会让整树被判 Stale，勿删除本文件或改回 autocrlf 重写
+.gitignore[FC5T]: F:git 忽略清单：DSH/Node 产物与日志、编辑器与系统文件、安装脚本本机产物（*.bak-aoci、profile-package.json），以及 aoci init 写入的 Agent 宿主配置 .codex/config.toml | R:code:scripts/install.ps1 | A:- | S:node_modules 与 .codex/config.toml 一旦被 Git 跟踪就会进 Managed Scope 并被索引；*.bak-aoci 是安装脚本的备份产物
+AGENTS.md[SG7S]: F:仓库级 Agent 纪律文件（aoci init 生成）：aoci:begin/end 受管块内说明认知层用途、模型生成/读取闭环、最小工具入口与会话收尾原则 | R:- | A:- | S:aoci:begin/end 之间的受管块由 AOCI 维护，勿手删或改为自行重建索引流程；改本文件会使其在索引中变 Stale
+LICENSE[SG2T]: F:项目 MIT 许可证全文（Copyright (c) 2026 donyue7）：允许自由使用、修改、分发与再许可，须保留版权与许可声明 | R:- | A:- | S:-
+README.md[SG6S]: F:插件对外说明：AOCI 标签页在会话视图中的定位与三区块（索引概览/治理状态/条目浏览）、顶部工具条、安装与卸载、数据来源与缓存语义、宿主/浏览器两半架构、已知限制与故障排查 | R:code:scripts/install.ps1 | A:- | S:安装三步与 install.ps1 实际行为、三端点与两半架构须同步；本包是本地包，只登记 dsh.profile.bundles 而不写 dependencies
+cordis.patch.yml[FV6T]: F:bundle patch 层：向 DSH 宿主组合插入一行 id/name 均为 dsh-aoci-panel 的插件行，使 profile 加载本包宿主半；浏览器半另由 package.json 的 dsh.client 声明 | R:code:package.json | A:profile 的 dsh.profile.bundles 列出本包后由 DSH 应用该 patch | S:id/name 必须与 package.json 的 name 完全一致，否则宿主行加载不到该包；本文件随包分发，改动须重装并重启 DSH
+package.json[FV5T]: F:包清单：main=lib/index.js 为宿主半、exports["./client"]=lib/client.js 为浏览器 bundle，dsh.bundle.patch 指 cordis.patch.yml、dsh.client 声明客户端注入，files 白名单只含 4 个随包文件 | R:code:cordis.patch.yml,code:lib/client.js | A:main=lib/index.js；exports["./client"]=lib/client.js；dsh.client.inject=["@deepseek-ai/dsh-client-ui-conversation"] | S:本包是本地包，只登记在 profile 的 dsh.profile.bundles、不写 dependencies，否则 pnpm 会去 npm 拉同名包；files 白名单须与 install.ps1 的拷贝列表同步
+
+===C:/Users/19289/Desktop/dsh-aoci-panel/lib/===
+client.js[EU7L]: F:浏览器半：经 window.__ModuleLoader__.load 注册 conversation.view 槽位的「AOCI」标签页（order 30），渲染索引概览、治理状态与条目浏览三卡片，数据来自宿主半 /aoci-panel/* 同源只读端点 | R:code:lib/index.js | A:ctx.slots.register({name:'conversation.view',id:'aoci',order:30,label:'AOCI'})；api('/aoci-panel/state' 与 '/entry' 与 '/verify') | S:必须用 __ModuleLoader__ 加 require("react") 的 bundle 形态，不可改用 ESM import；样式靠 ctx.effect 注入并在卸载时移除；条目列表只渲染前 300 条且界面不提示截断
+index.js[EE8L]: F:宿主半 Cordis 插件（inject webServer）：解析仓库 aoci.txt 根清单与各卷文件，按最小权限用 subprocess 到 shell 再到 shell-full 三通道调本机 aoci CLI 取治理事实，按仓库在内存缓存快照，对外提供三个只读端点 | R:code:lib/client.js,code:package.json,code:cordis.patch.yml | A:GET /aoci-panel/state、/entry、/verify；buildSnapshot（parseManifest 与 parseVolume 加 status/check）；runCli 三通道回退；apply(ctx) 外层 try/catch 兜装载失败 | S:必须保持只读：不写业务文件、不改 aoci.txt 与 .aoci 正式资产；三通道回退不可省——shell 沙箱下 aoci 会退化成 code_source_count=0 的假阻塞；快照按 repo 加 bin 缓存，只有 force=1 或 verify 才重算
+
+===C:/Users/19289/Desktop/dsh-aoci-panel/scripts/===
+install.ps1[OV6T]: F:安装/卸载脚本：把本包拷进指定 DSH profile 的 node_modules/dsh-aoci-panel，并在该 profile 的 package.json 的 dsh.profile.bundles 追加包名（改前备份 .bak-aoci） | R:code:package.json,code:cordis.patch.yml,code:lib/index.js,code:lib/client.js | A:pwsh -File scripts/install.ps1 [-Profile desktop] [-DshHome 路径] [-Uninstall] [-WhatIfOnly] | S:只拷 package.json、cordis.patch.yml、lib/index.js、lib/client.js 四个文件，新增随包文件须同步此处与 package.json.files；改 profile 清单前必须先备份；装完须重启 DSH

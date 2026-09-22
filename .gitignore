@@ -13,3 +13,7 @@ Thumbs.db
 # 安装脚本在本机留下的产物
 *.bak-aoci
 profile-package.json
+
+# AOCI agent host integration (machine-bound; do not commit)
+.codex/config.toml
+.codex/config.toml.backup.*
