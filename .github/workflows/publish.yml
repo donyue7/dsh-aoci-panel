@@ -1,14 +1,19 @@
 name: Publish Package
 
 # 受信发布（OIDC trusted publishing）：不需要任何长期 npm token，也不需要 6 位动态码。
+# 已验证：2026-09-23 通过本工作流发布 dsh-aoci-panel@0.1.1，自动生成 npm provenance。
 #
-# 前置条件（在 npmjs.com 上为 dsh-aoci-panel 配置一次 Trusted Publisher）：
-#   Provider        : GitHub Actions
-#   Org or user     : donyue7
-#   Repository      : dsh-aoci-panel
+# npm 侧前置条件（在 https://www.npmjs.com/package/dsh-aoci-panel → Settings 配置一次）：
+#   Provider         : GitHub Actions
+#   Org or user      : donyue7
+#   Repository       : dsh-aoci-panel
 #   Workflow filename: publish.yml
-#   Allowed actions : 必须勾选 "npm publish"（2026-09-03 之后的新配置默认只允许 npm stage publish）
-#   Environment name: 留空（若填写了，本工作流必须声明同名 environment）
+#   Environment name : 留空
+#   Allowed actions  : 必须勾选 "npm publish"（2026-09-03 之后的新配置默认只允许 npm stage publish）
+#
+# 两个已踩过的坑（改本文件时不要退回）：
+#   1) setup-node 不要设 registry-url：它写入的空 `_authToken` 会顶掉 OIDC 鉴权，发布报 E404。
+#   2) 本工作流需要 npm >= 11.5.1；setup-node 自带的 npm 版本较低，必须先升级。
 #
 # 发布方式：
 #   1) 打 tag：git tag v0.1.2 && git push origin v0.1.2
@@ -30,9 +35,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # 注意：刻意不使用 setup-node 的 registry-url。
-      # 它会写入含空 `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}` 的 .npmrc，
-      # 在 OIDC 场景下会顶掉受信发布鉴权（表现为 publish 报 E404）。
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
@@ -43,27 +45,6 @@ jobs:
           node -v
           npm install -g npm@^11
           npm -v
-
-      - name: 诊断 OIDC 环境
-        run: |
-          echo "ACTIONS_ID_TOKEN_REQUEST_URL present: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
-          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN present: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+yes}"
-          echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
-          echo "GITHUB_WORKFLOW_REF=$GITHUB_WORKFLOW_REF"
-          echo "NPM_CONFIG_USERCONFIG=${NPM_CONFIG_USERCONFIG:-<unset>}"
-          echo "registry=$(npm config get registry)"
-
-      - name: 直接测试 OIDC -> npm token 交换（暴露真实错误）
-        run: |
-          RESP=$(curl -sS -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org")
-          ID_TOKEN=$(echo "$RESP" | jq -r .value)
-          echo "id_token length: ${#ID_TOKEN}"
-          echo "--- exchange HTTP status + body ---"
-          curl -sS -o /tmp/exchange.json -w "status=%{http_code}\n" -X POST \
-            -H "Authorization: Bearer ${ID_TOKEN}" \
-            "https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/dsh-aoci-panel"
-          head -c 1500 /tmp/exchange.json; echo
 
       - name: 检查该版本是否已发布
         id: check
