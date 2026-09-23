@@ -2,7 +2,7 @@
 
 给 [DeepSeek Harness](https://github.com/deepseek-ai)（DSH）用的 AOCI 认知面板插件：在会话视图标签栏
 加一个 **`AOCI`** 标签，点开即可看到当前项目的 AOCI 认知索引概览、
-治理状态与条目浏览。
+治理状态与条目浏览；项目尚未构建 AOCI 时，可直接在面板里**引导式安装**。
 
 ## 功能
 
@@ -11,16 +11,41 @@
 | 索引概览 | 项目名、布局模式、索引条目数、各卷状态、`composite_identity`、基线文件数与更新时间、最近一次 verify、待处理报告、最近操作 |
 | 治理状态 | 是否对齐、`check` 结果与下一步、待处理事务、Recovery、预算水位、Scope 对齐与 index/observe/exclude 规则数、Code 漂移明细、Findings |
 | 条目浏览 | 全部条目可按「路径 / 标签 / F 描述」搜索；点击展开单条完整 `F / R / A / S`，标签按元卷词典解成中文含义 |
+| 安装向导 | 仓库没有 `aoci.txt` 时自动出现：环境预检（aoci CLI、DSH home）→ 安装选项（Locale / Scope / Agent / hook）→ 动作预览 → 执行 `aoci init`（+可选 `aoci scan`）与 DSH MCP 行追加 → 后续步骤引导（含可复制的会话提示词） |
+| 引导卡片 | 顶部「引导」按钮：AOCI 概念、安装→构建→使用→维护的生命周期、面板区块说明、常用 CLI 命令速查 |
 
 顶部工具条提供：**仓库切换**（来自 DSH 已注册工作区，默认自动定位到当前会话所在项目）、
 **aoci 二进制切换**（自动探测目录下所有 `aoci*.exe` 并按 rc 版本降序）、**数据时间**、
-**刷新**、**校验**（真实执行一次 `aoci verify`）。
+**刷新**、**校验**（真实执行一次 `aoci verify`）、**引导**。
+
+## 安装 AOCI（新项目接入）
+
+被观察的仓库没有 AOCI 时，面板不再只是一句「未初始化」，而是一个完整的安装向导：
+
+1. **环境预检**：确认仓库尚未初始化、探测 aoci 可执行文件（目录可改后重新检测）、
+   定位 DSH home 并检查 `cordis.patch.yml` 的既有接入（按仓库路径幂等识别）。
+2. **安装选项**：Locale（`zh-CN` / `en-US`）、Managed Scope（`production` / `full`）、
+   其他 Agent 接入（`--agent claude/codex/cursor/opencode/all`，DSH 之外的客户端）、
+   生命周期 hook、是否执行 `aoci scan` 建基线、是否接入 DSH。
+3. **执行**：面板原样展示将执行的命令与将追加的 YAML 后才动手 ——
+   `aoci init` 生成索引骨架与 AGENTS.md 契约区块；`aoci scan` 建基线指纹；
+   接入 DSH 则向 `~/.dsh/cordis.patch.yml` 追加一条 `dsh-mcp-client` 行
+   （行 id 与 `serverName` 自动防碰撞，跨 home/profile 补丁检测；写前做时间戳备份，
+   追加前校验文件仍是合法条目列表，否则拒绝改写并把 YAML 原文交给用户手动处理）。
+4. **后续引导**：重启 DSH 生效 → 在该仓库打开会话、粘贴面板给出的提示词让 Agent
+   按 Guide 构建完整索引 → 回到面板查看治理状态。
+
+安装只写入目标仓库的 AOCI 资产（`aoci.txt` / `aoci.code.txt` / `aoci.meta.txt` /
+`.aoci/` / `AGENTS.md` / `.gitattributes`，均由 aoci CLI 生成）与可选的 DSH 组合补丁行，
+不触碰业务代码。CLI 本体从 [aoci-spec/aoci-code](https://github.com/aoci-spec/aoci-code) 获取。
 
 ## 环境要求
 
 - DSH（DeepSeek Harness）桌面版，或任意带 Web 前端的 profile
-- 被观察的仓库已由 AOCI 建立认知索引（根清单 `aoci.txt` + 各卷文件）
-- 可选但推荐：本机有 `aoci` CLI，用于取回**实时治理事实**；没有时面板仍可展示索引内容
+- 已由 AOCI 建立认知索引的仓库（没有的话直接用上面的安装向导）
+- aoci CLI：面板的功能分两档 ——
+  - **展示索引内容**：不需要 CLI（直接解析 `aoci.txt` 与各卷文件，离线可用）；
+  - **治理事实 / 校验 / 安装向导**：需要本机 aoci CLI（默认探测 `C:\aoci\bin`，可在向导里改）。
 
 ## 安装
 
@@ -69,10 +94,12 @@ pwsh -File scripts/install.ps1 -Uninstall
 
 - **索引内容**：宿主半直接解析仓库里的 `aoci.txt` 根清单与各卷文件。**不依赖 CLI**，因此离线也能用。
 - **治理事实**：调用本机 aoci CLI 的 `status --json` 与 `check --json`；点「校验」额外执行 `verify --json`。
+- **安装向导**：`GET /aoci-panel/install` 做只读预检；`POST /aoci-panel/install` 执行安装
+  （`aoci init` / `aoci scan` 走与治理事实相同的 CLI 通道；DSH 补丁行由宿主半经 `fs` 服务写入）。
 - **CLI 通道**：按最小权限优先逐级回退 —— `subprocess` 直接 argv → `shell` 默认策略 → `shell` 显式放行。
   命中的通道会被记住并显示在面板底部（`通道=…`），不会静默降级。
 - **缓存**：宿主按仓库在内存里缓存快照。**切换标签、重开面板、重新挂载都不会重新取数**；
-  只有「刷新」与「校验」才触发重算。顶部 `数据 HH:MM:SS` 标明这份快照的时间。
+  只有「刷新」与「校验」才触发重算（安装成功也会令该仓库缓存失效）。顶部 `数据 HH:MM:SS` 标明这份快照的时间。
   缓存活在本进程内，DSH 重启后首次打开会重新计算。
 
 ## 架构
@@ -82,8 +109,10 @@ dsh-aoci-panel
 ├── package.json         # main=宿主半，exports["./client"]=浏览器 bundle，dsh.client 声明
 ├── cordis.patch.yml     # bundle patch 层：向宿主组合插入 dsh-aoci-panel 行
 └── lib
-    ├── index.js         # 宿主半：注册 /aoci-panel/{state,entry,verify} 三个只读精确路由
+    ├── index.js         # 宿主半：/aoci-panel/{state,entry,verify} 三个只读精确路由
+    │                    #         + /aoci-panel/install（GET 预检 / POST 执行安装）
     └── client.js        # 浏览器半：window.__ModuleLoader__.load 注册 conversation.view 标签页
+                         #         含安装向导与引导卡片
 ```
 
 - 宿主半是普通 Cordis 插件（`export { name, inject, apply }`），依赖 `webServer`；它只提供 JSON 端点，
@@ -128,8 +157,10 @@ pwsh -File scripts/install.ps1              # 发布前用 copy 模式做一次�
 
 ## 已知限制
 
-- **只读**：不写业务文件、不修改 `aoci.txt` / `.aoci` 正式资产；「校验」会让 aoci 自己追加
-  `.aoci/verify_history` 审计记录（该目录已被 `.aoci/.gitignore` 忽略）。
+- **除安装向导外只读**：面板不写业务文件、不修改 `aoci.txt` / `.aoci` 正式资产；安装向导显式触发的写入
+  仅限目标仓库的 aoci init/scan 产物与可选的 DSH 补丁行（备份 + 幂等 + 防碰撞，见上）；
+  「校验」会让 aoci 自己追加 `.aoci/verify_history` 审计记录（该目录已被 `.aoci/.gitignore` 忽略）。
+- DSH 补丁行追加后需**重启 DSH** 才生效（组合在启动时装配）；向导的后续步骤里会提醒。
 - 本包是**本地包**，只登记在 `dsh.profile.bundles`、未写进 `dependencies`，以避免 `pnpm install`
   去 npm 拉同名包。若你用插件市场装卸其他插件导致 bundles 被重写，标签可能消失，把那一行加回即可。
 - 面板是宿主进程内的会话期缓存；重启后首屏需要重新取数。
@@ -141,10 +172,12 @@ pwsh -File scripts/install.ps1              # 发布前用 copy 模式做一次�
 
 | 现象 | 排查 |
 | --- | --- |
-| 标签栏没有 `AOCI` | profile 的 `dsh.profile.bundles` 是否含 `dsh-aoci-panel`；是否重启过 DSH；DSH 日志里搜 `dsh-aoci-panel` |
+| 标签栏没有 `AOCI` | profile 的 `dsh.profile.bundles` 是否含 `dsh-aoci-panel`；是否重启过 DSH；DSH 日志中搜 `dsh-aoci-panel` |
 | 卡片显示「未取得治理事实」 | 看卡片底部 `CLI:` 行的 `通道=` 与 `尝试=` 列表，以及下方的错误详情 |
 | 治理数字可疑（业务源文件 = 0） | 典型沙箱拦截迹象：CLI 被围栏后无法枚举业务源清单，请以终端里手跑的 `aoci verify` 为准 |
 | 顶部仓库下拉是空的 | 该 DSH 实例还没有注册过工作区 |
+| 安装向导提示未探测到 aoci CLI | 确认本机有 aoci 可执行文件（官方仓库 [aoci-spec/aoci-code](https://github.com/aoci-spec/aoci-code)），或在向导里改「aoci 可执行目录」后重新检测 |
+| DSH 接入后工具没出现 | 确认重启过 DSH；检查 `~/.dsh/cordis.patch.yml` 的行 id / `serverName` 是否与其他行重复；DSH 日志中搜 `dsh-mcp-client` |
 
 ## 许可证
 
