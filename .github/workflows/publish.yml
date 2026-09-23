@@ -7,10 +7,11 @@ name: Publish Package
 #   Org or user     : donyue7
 #   Repository      : dsh-aoci-panel
 #   Workflow filename: publish.yml
-#   Allowed actions : 勾选 "npm publish"（新配置默认只允许 npm stage publish）
+#   Allowed actions : 必须勾选 "npm publish"（2026-09-03 之后的新配置默认只允许 npm stage publish）
+#   Environment name: 留空（若填写了，本工作流必须声明同名 environment）
 #
 # 发布方式：
-#   1) 打 tag：git tag v0.1.1 && git push origin v0.1.1
+#   1) 打 tag：git tag v0.1.2 && git push origin v0.1.2
 #   2) 或在仓库 Actions 页面手动 Run workflow（workflow_dispatch）
 
 on:
@@ -29,17 +30,34 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # 注意：这里刻意不使用 setup-node 的 registry-url。
+      # 它会写入含空 `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}` 的 .npmrc，
+      # 在没有 NODE_AUTH_TOKEN 的 OIDC 场景下会顶掉受信发布鉴权（表现为 publish 报 E404）。
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
-          package-manager-cache: false   # 发布构建一律禁用缓存
+          package-manager-cache: false
 
       - name: 准备工具链（受信发布需要 npm >= 11.5.1）
         run: |
           node -v
           npm install -g npm@^11
           npm -v
+
+      - name: 诊断 OIDC 环境并清理空 token
+        run: |
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL present: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
+          echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
+          echo "GITHUB_WORKFLOW_REF=$GITHUB_WORKFLOW_REF"
+          echo "NPM_CONFIG_USERCONFIG=${NPM_CONFIG_USERCONFIG:-<unset>}"
+          if [ -n "$NPM_CONFIG_USERCONFIG" ] && [ -f "$NPM_CONFIG_USERCONFIG" ]; then
+            echo "--- npmrc 内容（token 已脱敏）---"
+            sed 's/\(_authToken=\).*/\1<redacted>/' "$NPM_CONFIG_USERCONFIG"
+            echo "--- 移除 _authToken 行，强制走 OIDC ---"
+            sed -i '/_authToken/d' "$NPM_CONFIG_USERCONFIG"
+            sed 's/\(_authToken=\).*/\1<redacted>/' "$NPM_CONFIG_USERCONFIG"
+          fi
+          echo "registry=$(npm config get registry)"
 
       - name: 检查该版本是否已发布
         id: check
@@ -54,5 +72,5 @@ jobs:
           fi
 
       - name: 发布到 npm（OIDC 鉴权，自动生成 provenance）
-        if: steps.check.outputs.skip == 'false'
+        if: steps.check.outputs.skip != 'true'
         run: npm publish
