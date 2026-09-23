@@ -1,6 +1,6 @@
 {
   "name": "dsh-aoci-panel",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AOCI 认知面板：在会话视图标签中展示当前项目的 AOCI 索引概览、治理状态与条目浏览。",
   "type": "module",
   "author": "donyue7",
