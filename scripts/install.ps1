@@ -34,6 +34,11 @@
 .EXAMPLE
   pwsh -File scripts/install.ps1 -Uninstall
   移除 bundles 行并删除包目录（或联接）。
+
+.NOTES
+  DSH home 兼容新旧布局：显式 -DshHome → $env:DSH_HOME →
+  %USERPROFILE%\.dsh-harness-next（当前默认）→ %USERPROFILE%\.dsh（旧布局）；
+  取第一个含 profiles/<Profile>/package.json 的候选，找不到会列出查找过的路径。
 #>
 [CmdletBinding()]
 param(
