@@ -40,7 +40,8 @@ param(
   [ValidateSet('copy', 'link')]
   [string]$Mode = 'copy',
   [string]$Profile = 'desktop',
-  [string]$DshHome = (Join-Path $env:USERPROFILE '.dsh'),
+  # Empty = auto-detect the active DSH home (see Resolve-DshHome below).
+  [string]$DshHome = '',
   [switch]$Uninstall,
   [switch]$WhatIfOnly
 )
@@ -50,6 +51,30 @@ $ErrorActionPreference = 'Stop'
 $packageName = 'dsh-aoci-panel'
 $source = Split-Path -Parent $PSScriptRoot
 $sourceManifest = Join-Path $source 'package.json'
+
+<#
+  解析当前生效的 DSH home，兼容新旧布局：
+    1. 显式 -DshHome
+    2. $env:DSH_HOME
+    3. %USERPROFILE%\.dsh-harness-next（当前默认）
+    4. %USERPROFILE%\.dsh（旧布局）
+  取第一个存在 profiles/<Profile>/package.json 的候选；都没有就报错并列出查找过的路径。
+#>
+function Resolve-DshHome {
+  param([string]$Explicit, [string]$ProfileName)
+  if ($Explicit) { return $Explicit }
+  $candidates = New-Object System.Collections.Generic.List[string]
+  if ($env:DSH_HOME) { $candidates.Add($env:DSH_HOME) }
+  $candidates.Add((Join-Path $env:USERPROFILE '.dsh-harness-next'))
+  $candidates.Add((Join-Path $env:USERPROFILE '.dsh'))
+  foreach ($candidate in $candidates) {
+    $manifest = Join-Path (Join-Path $candidate 'profiles') (Join-Path $ProfileName 'package.json')
+    if (Test-Path $manifest) { return $candidate }
+  }
+  throw ("找不到包含 profile '$ProfileName' 的 DSH home。已查找：{0}。请用 -DshHome 指定。" -f ($candidates -join '; '))
+}
+
+$DshHome = Resolve-DshHome -Explicit $DshHome -ProfileName $Profile
 $profileDir = Join-Path $DshHome (Join-Path 'profiles' $Profile)
 $profileManifest = Join-Path $profileDir 'package.json'
 $target = Join-Path $profileDir (Join-Path 'node_modules' $packageName)
