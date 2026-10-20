@@ -65,9 +65,19 @@ function Test-Item {
 function Get-ShippedPaths {
   param([string]$ManifestPath)
   $parsed = Get-Content $ManifestPath -Raw | ConvertFrom-Json
+  $root = Split-Path -Parent $ManifestPath
   $shipped = @('package.json')
   foreach ($entry in @($parsed.files)) {
-    if ($entry) { $shipped += [string]$entry }
+    if (-not $entry) { continue }
+    $entry = [string]$entry
+    $full = Join-Path $root $entry
+    if (Test-Path -LiteralPath $full -PathType Container) {
+      Get-ChildItem -LiteralPath $full -Recurse -File | ForEach-Object {
+        $shipped += (($_.FullName.Substring($root.Length).TrimStart('\', '/')) -replace '\\', '/')
+      }
+    } else {
+      $shipped += $entry
+    }
   }
   return ($shipped | Select-Object -Unique)
 }

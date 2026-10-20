@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-09-21T10:59:07Z",
-  "updated_at": "2026-10-20T10:51:42Z",
+  "updated_at": "2026-10-20T10:53:49Z",
   "files": {
     ".gitattributes": {
       "sha256": "21fa16a2122e2b0360b47502c577428b645437e08e9e87ffba661f84853cb476",
@@ -36,9 +36,9 @@
     },
     "aoci.code.txt": {
       "role": "index",
-      "sha256": "f921d7f745489920818002fd58503b49fd9ae8ab5ef5849bcea933ec6052ca2e",
-      "size": 10569,
-      "normalized_sha256": "f921d7f745489920818002fd58503b49fd9ae8ab5ef5849bcea933ec6052ca2e"
+      "sha256": "e11d9e4f02e1df3b194397a18995fc2b99c6eed373a501f8f983841edd549906",
+      "size": 10635,
+      "normalized_sha256": "e11d9e4f02e1df3b194397a18995fc2b99c6eed373a501f8f983841edd549906"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -77,9 +77,9 @@
     },
     "package.json": {
       "role": "index",
-      "sha256": "8222b1b9d873727a7e4633fbcd0c689cd0d0b0bd2a11a281c450a0f92bb76695",
-      "size": 1531,
-      "normalized_sha256": "8222b1b9d873727a7e4633fbcd0c689cd0d0b0bd2a11a281c450a0f92bb76695"
+      "sha256": "2ca74eb7b5f598034935f9dd2fcf9f4a0518264ed23373e8a99a43b6366039b7",
+      "size": 1586,
+      "normalized_sha256": "2ca74eb7b5f598034935f9dd2fcf9f4a0518264ed23373e8a99a43b6366039b7"
     },
     "proxy-backup.json": {
       "sha256": "3e17f37f112dd5b1c5f6a1d11f23b3ce561e50357b6612653d2d78bc73ab4e3a",
@@ -87,9 +87,10 @@
       "normalized_sha256": "63e6f546aac8fa00ac9116f6a3a93507a3e240e6b2aeded0046b6c10ddb9501b"
     },
     "scripts/check.ps1": {
-      "sha256": "fba6f0281bd8d8f99a4dd8994e033e99bbd3a4b65881a699a1cd1959cdac795c",
-      "size": 9715,
-      "normalized_sha256": "fba6f0281bd8d8f99a4dd8994e033e99bbd3a4b65881a699a1cd1959cdac795c"
+      "role": "index",
+      "sha256": "e8992e181ee9c070b1cf403a4b03282cd4f64dd48a4ba6aaa1ed5f7631816563",
+      "size": 10092,
+      "normalized_sha256": "e8992e181ee9c070b1cf403a4b03282cd4f64dd48a4ba6aaa1ed5f7631816563"
     },
     "scripts/install.ps1": {
       "role": "index",
