@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-09-21T10:59:07Z",
-  "updated_at": "2026-10-20T11:01:43Z",
+  "updated_at": "2026-10-20T11:12:27Z",
   "files": {
     ".gitattributes": {
       "sha256": "21fa16a2122e2b0360b47502c577428b645437e08e9e87ffba661f84853cb476",
@@ -30,15 +30,15 @@
     },
     "README.md": {
       "role": "index",
-      "sha256": "6ba9debaa98e0aa34b6601cfe09115f760f1bc3ed3289bf9c6b2a308f54c2552",
-      "size": 19898,
-      "normalized_sha256": "6ba9debaa98e0aa34b6601cfe09115f760f1bc3ed3289bf9c6b2a308f54c2552"
+      "sha256": "e710ff53603a2e978332a54ae711937d2e3ff515d3321590d8c5e56284a5c8ef",
+      "size": 20484,
+      "normalized_sha256": "e710ff53603a2e978332a54ae711937d2e3ff515d3321590d8c5e56284a5c8ef"
     },
     "aoci.code.txt": {
       "role": "index",
-      "sha256": "d31e1c94a53dbe62aba1de6d183d51b20e6b7ea98a873b4cd45574f5073c774d",
-      "size": 10523,
-      "normalized_sha256": "d31e1c94a53dbe62aba1de6d183d51b20e6b7ea98a873b4cd45574f5073c774d"
+      "sha256": "c3dd9a09a03ad61bd672198784aa1598cfa4fb352c12ea87f75b2af61c810871",
+      "size": 10745,
+      "normalized_sha256": "c3dd9a09a03ad61bd672198784aa1598cfa4fb352c12ea87f75b2af61c810871"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -59,15 +59,15 @@
     },
     "lib/client.js": {
       "role": "index",
-      "sha256": "3686b50b6a38e7f57ca60f1472dbd634944151c0c898489da08f3b1c2f7fdad3",
-      "size": 84270,
-      "normalized_sha256": "3686b50b6a38e7f57ca60f1472dbd634944151c0c898489da08f3b1c2f7fdad3"
+      "sha256": "d2ba9f716a51eb8ade4961df9d7319b0f21bf1be218a11cf62999b23f0bdc98b",
+      "size": 84711,
+      "normalized_sha256": "d2ba9f716a51eb8ade4961df9d7319b0f21bf1be218a11cf62999b23f0bdc98b"
     },
     "lib/cognition.js": {
       "role": "index",
-      "sha256": "da6ebdec5b0ceb181390603b1093287547a29e0bdbdbb76f5931065cdd571d98",
-      "size": 14210,
-      "normalized_sha256": "da6ebdec5b0ceb181390603b1093287547a29e0bdbdbb76f5931065cdd571d98"
+      "sha256": "2f268c4f162956725d6e4b6716acbf737d3875bddddd494ce8b08f4cd002dfb0",
+      "size": 15695,
+      "normalized_sha256": "2f268c4f162956725d6e4b6716acbf737d3875bddddd494ce8b08f4cd002dfb0"
     },
     "lib/index.js": {
       "role": "index",
@@ -106,9 +106,9 @@
     },
     "scripts/test-cognition.mjs": {
       "role": "index",
-      "sha256": "cc73573271b3ff2861eeb60c6ec83f5dff98fdd01f4e8156aec18ce9eee60b7a",
-      "size": 6432,
-      "normalized_sha256": "cc73573271b3ff2861eeb60c6ec83f5dff98fdd01f4e8156aec18ce9eee60b7a"
+      "sha256": "d9e9c0038ebb68f45f5b944518d769764c8c6ba9a4a745af80c679f55c74c82f",
+      "size": 7711,
+      "normalized_sha256": "d9e9c0038ebb68f45f5b944518d769764c8c6ba9a4a745af80c679f55c74c82f"
     }
   },
   "managed_scope": {

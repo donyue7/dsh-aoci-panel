@@ -125,7 +125,10 @@ test('collectCognition 用构造的 governance 换算指标', async () => {
   }
   const data = await collectCognition(TEST_REPO, gov)
   assert.equal(data.hasIndex, true)
+  assert.equal(data.degraded, false)
+  assert.equal(data.reason, null)
   const m = data.metrics
+  assert.equal(m.governanceAvailable, true)
   assert.equal(m.sourceCount, 100)
   assert.equal(m.entryCount, 98)
   assert.equal(m.coveragePct, 98)
@@ -138,6 +141,33 @@ test('collectCognition 用构造的 governance 换算指标', async () => {
   assert.equal(m.driftCount, 3)
   assert.equal(m.scopeIndex, 96)
   assert.equal(m.aligned, true)
+})
+
+test('collectCognition 缺治理快照时显式降级：不把未知写成 0/false', async () => {
+  const data = await collectCognition(TEST_REPO, null)
+  assert.equal(data.degraded, true)
+  assert.ok(String(data.reason).includes('治理快照不可用'))
+  const m = data.metrics
+  assert.equal(m.governanceAvailable, false)
+  assert.equal(m.sourceCount, null, '源文件数只能来自治理快照')
+  assert.equal(m.coveragePct, null)
+  assert.equal(m.blindSpots, null)
+  assert.equal(m.missingConstraints, null)
+  assert.equal(m.important, null)
+  assert.equal(m.missingPct, null)
+  assert.equal(m.budgetTokens, null)
+  assert.equal(m.budgetTarget, null)
+  assert.equal(m.budgetPct, null)
+  assert.equal(m.aligned, null, '未知不能写成未对齐')
+  assert.equal(m.driftCount, null)
+  assert.equal(m.pendingTransactions, null)
+  assert.equal(m.scopeIndex, null)
+  // 由索引文本本身可得的数字仍给真值
+  assert.ok(m.entryCount > 0, '条目数可从 aoci.code.txt 得出')
+  assert.ok(m.sEntries > 0)
+  assert.ok(m.sPresent > 0)
+  assert.ok(typeof m.sPct === 'number')
+  assert.ok(data.constraints.length > 0, '约束视图不受影响')
 })
 
 test('collectCognition 采集真实仓库（Gys）', async () => {

@@ -48,6 +48,12 @@ MCP 绑定诊断与快捷动作；项目尚未构建 AOCI 时，可直接在面�
 `lib/cognition.js`（纯 Node，不调用 aoci CLI、不写文件）。它与其他端点保持同样的只读边界：
 不修改 `aoci.txt` / `.aoci` 正式资产，`git log` 与 `verify_history` 都只是读取。
 
+**降级语义**：`bin` 是可选参数。不传 `bin`、或本机 aoci 二进制不可用时，端点会返回
+`degraded: true` + `reason`，且 `metrics.governanceAvailable = false`——凡是只能由治理快照得出的
+指标（`sourceCount` / `coveragePct` / `budget*` / `aligned` / `driftCount` / `scope*`）一律为 `null`，
+**不会写成 0 或 false**，避免消费者把「没查到」误读成「0 源、未对齐」。由索引文本本身可得的数字
+（`entryCount` / `sEntries` / `sPresent` / `sPct`）与账本、约束、地图、资产视图照常可用。
+
 ## 快捷动作与提示词
 
 多工作区详情与单仓库页都内置快捷动作：`verify` / `check` / `status` / `doctor` / `index agent guide`
