@@ -206,6 +206,31 @@ Test-Item 'node --check 语法' {
 }
 
 Test-Item 'AOCI 基线漂移' {
+  $candidates = @()
+  if ($env:AOCI_BIN) { $candidates += $env:AOCI_BIN }
+  $candidates += 'C:\aoci\bin\aoci-rc19.exe', 'C:\aoci\bin\aoci.exe'
+  $bin = $candidates | Where-Object { Test-Path $_ -PathType Leaf } | Select-Object -First 1
+  if (-not $bin) {
+    $cmd = Get-Command aoci -ErrorAction SilentlyContinue
+    if ($cmd) { $bin = $cmd.Source }
+  }
+  if ($bin) {
+    $raw = & $bin check --json 2>&1 | Out-String
+    try { $check = $raw | ConvertFrom-Json } catch { $check = $null }
+    if ($check -and $check.governance) {
+      if ($check.governance.governance_aligned) { return "与治理一致（$([System.IO.Path]::GetFileName($bin)) aligned）" }
+      $drift = $check.governance.code_drift
+      $parts = @()
+      if (@($drift.missing).Count) { $parts += '缺：' + (@($drift.missing) -join '、') }
+      if (@($drift.orphan).Count) { $parts += '孤儿：' + (@($drift.orphan) -join '、') }
+      if (@($drift.stale).Count) { $parts += '已改：' + (@($drift.stale) -join '、') }
+      if (@($drift.unbaselined).Count) { $parts += '未入基线：' + (@($drift.unbaselined) -join '、') }
+      if (-not $parts.Count) { $parts += "findings=$(@($check.findings).Count)" }
+      $detail = ($parts -join '；') + '；收尾时需按 AOCI Guide 维护认知'
+      $level = if ($RequireAociAligned) { 'FAIL' } else { 'WARN' }
+      return @{ level = $level; detail = $detail }
+    }
+  }
   $baselinePath = Join-Path $Root '.aoci\baseline.json'
   if (-not (Test-Path $baselinePath)) {
     return @{ level = 'WARN'; detail = '没有 .aoci/baseline.json，跳过' }
