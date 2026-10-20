@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-09-21T10:59:07Z",
-  "updated_at": "2026-10-20T11:12:27Z",
+  "updated_at": "2026-10-20T11:42:14Z",
   "files": {
     ".gitattributes": {
       "sha256": "21fa16a2122e2b0360b47502c577428b645437e08e9e87ffba661f84853cb476",
@@ -36,9 +36,9 @@
     },
     "aoci.code.txt": {
       "role": "index",
-      "sha256": "c3dd9a09a03ad61bd672198784aa1598cfa4fb352c12ea87f75b2af61c810871",
-      "size": 10745,
-      "normalized_sha256": "c3dd9a09a03ad61bd672198784aa1598cfa4fb352c12ea87f75b2af61c810871"
+      "sha256": "2edfe4a38aa43a5f809366559bbe33f7d9c50197de7ec487c09633c5dd4cb19e",
+      "size": 10897,
+      "normalized_sha256": "2edfe4a38aa43a5f809366559bbe33f7d9c50197de7ec487c09633c5dd4cb19e"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -59,9 +59,9 @@
     },
     "lib/client.js": {
       "role": "index",
-      "sha256": "d2ba9f716a51eb8ade4961df9d7319b0f21bf1be218a11cf62999b23f0bdc98b",
-      "size": 84711,
-      "normalized_sha256": "d2ba9f716a51eb8ade4961df9d7319b0f21bf1be218a11cf62999b23f0bdc98b"
+      "sha256": "1051b08402dfc7a2b2cb6e67dc115ec3e7877ca0c8709a4aa09aee7ee7fd21a2",
+      "size": 85063,
+      "normalized_sha256": "1051b08402dfc7a2b2cb6e67dc115ec3e7877ca0c8709a4aa09aee7ee7fd21a2"
     },
     "lib/cognition.js": {
       "role": "index",
@@ -71,15 +71,15 @@
     },
     "lib/index.js": {
       "role": "index",
-      "sha256": "02b737f309d622ad3c023962337439942ecf0d11944507c2c9df02ff7c542c3f",
-      "size": 79018,
-      "normalized_sha256": "02b737f309d622ad3c023962337439942ecf0d11944507c2c9df02ff7c542c3f"
+      "sha256": "e134bcee378208ea22efd924b08180c8178bd695bcbd81aa2876289d1b1ac5d1",
+      "size": 79442,
+      "normalized_sha256": "e134bcee378208ea22efd924b08180c8178bd695bcbd81aa2876289d1b1ac5d1"
     },
     "package.json": {
       "role": "index",
-      "sha256": "2ca74eb7b5f598034935f9dd2fcf9f4a0518264ed23373e8a99a43b6366039b7",
-      "size": 1586,
-      "normalized_sha256": "2ca74eb7b5f598034935f9dd2fcf9f4a0518264ed23373e8a99a43b6366039b7"
+      "sha256": "4ab897340c4c39c9691ec8d3225f4af0b02ad38d2670325c04b5f9cc4fad88a7",
+      "size": 1640,
+      "normalized_sha256": "0701d52b30989505d5b9d32dc2eb712868b5e0014276a2411c96704f3e3918c5"
     },
     "proxy-backup.json": {
       "sha256": "3e17f37f112dd5b1c5f6a1d11f23b3ce561e50357b6612653d2d78bc73ab4e3a",
