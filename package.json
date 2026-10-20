@@ -17,7 +17,8 @@
     "check": "pwsh -NoProfile -File scripts/check.ps1",
     "install:link": "pwsh -NoProfile -File scripts/install.ps1 -Mode link",
     "install:copy": "pwsh -NoProfile -File scripts/install.ps1",
-    "uninstall": "pwsh -NoProfile -File scripts/install.ps1 -Uninstall"
+    "uninstall": "pwsh -NoProfile -File scripts/install.ps1 -Uninstall",
+    "test": "node --test scripts/test-cognition.mjs && node scripts/test-client-cognition.mjs"
   },
   "exports": {
     ".": {
@@ -28,6 +29,7 @@
   },
   "files": [
     "lib/index.js",
+    "lib/cognition.js",
     "lib/client.js",
     "cordis.patch.yml"
   ],

@@ -12,11 +12,41 @@ MCP 绑定诊断与快捷动作；项目尚未构建 AOCI 时，可直接在面�
 | 单仓库 | 索引概览（项目、布局、条目数、各卷、composite_identity、基线、最近 verify、待处理报告、最近操作）；治理状态（对齐结论、漂移明细、预算水位、Scope 规则、Findings、CLI 通道）；条目浏览（按路径/标签/F 搜索，展开完整 `F / R / A / S`，标签按元卷词典解义） |
 | 绑定诊断 | 该仓库绑定的 MCP `serverName` 与工具命名空间（`mcp__<serverName>__`）；检测 serverName 冲突、未绑定、绑错仓库（`--repo` 不一致）、旧二进制（rc 版本落后）；一键「修复绑定」归一 command / `--repo`（写前备份，保留行 id 与 serverName）；给出可直接粘贴的 Agent 提示词（bootstrap / 绑定自检） |
 | 初始化 | 单仓库安装向导（未初始化仓库自动出现）+ 多工作区**批量初始化**（多选未初始化工作区，每仓库独立 serverName，顺序执行） |
+| 认知 | 回答「AOCI 对这个仓库做了什么、对开发者有什么用」：5 张价值卡（记忆覆盖 / 约束缺口 / 索引预算 / 治理状态 / 最近认知更新）+ 5 个子视图（变更账本 / 开发须知 / 认知地图 / 健康时间线 / 资产清单），全部来自仓库内既有产物，只读 |
 | 引导 | 顶部「引导」按钮：AOCI 概念、生命周期、面板区块说明、常用 CLI 命令速查 |
 
 顶部工具条提供：**标签切换**、**引导**、**数据时间**、**刷新**、**校验**（真实执行一次 `aoci verify`）；
 单仓库标签内另有**仓库切换**（来自 DSH 已注册工作区，默认自动定位到当前会话所在项目）与
 **aoci 二进制切换**（自动探测目录下所有 `aoci*.exe` 并按 rc 版本降序，rc19+ 优先）。
+
+## 认知视图（AOCI 对项目做了什么）
+
+「认知」标签面向**接手项目的开发者**，回答三个问题：这个仓库被记住了多少、缺哪些红线、上次改了什么，
+而不是只给出 `条目 420 · code present · meta present` 这种原理层面的叙述。
+
+**价值卡（首屏）**
+
+| 卡 | 内容 | 读法 |
+| --- | --- | --- |
+| 记忆覆盖 | `code_entry_count / code_source_count`、覆盖率、盲区 | 覆盖率 100% 表示每个受管源文件都有认知条目 |
+| 约束缺口 | 高价值条目里缺 `S` 的数量，以及全量 `S` 覆盖 | 缺口就是「还没写下来的坑」 |
+| 索引预算 | `whole_index_tokens / target_tokens` 与水位 | 索引占多少上下文预算 |
+| 治理状态 | aligned / 未对齐、漂移数、待处理事务、受管条目 | 现在是否真的需要人介入 |
+| 最近认知更新 | 最近一次 `aoci.code.txt` 提交的 hash 与标题 | 上次认知变化是什么 |
+
+**子视图**
+
+| 子视图 | 数据来源 | 回答什么 |
+| --- | --- | --- |
+| 变更账本 | `git log -p -- aoci.code.txt`（最近 8 次提交） | 每次提交新增 / 更新 / 删除了哪些条目（全路径 + 标签 + F） |
+| 开发须知 | `aoci.code.txt` 的全部 `S` 约束（按目录分组、可搜索） | 改这个仓库前必须知道的红线 |
+| 认知地图 | 条目按目录聚合（条目数 / S 覆盖 / C9 高价值） | 记住了哪部分、哪里还是盲区 |
+| 健康时间线 | `.aoci/verify_history`（最近 10 条） | 治理是持续校验出来的过程，不是静态标签 |
+| 资产清单 | `aoci.txt` / `aoci.code.txt` / `aoci.meta.txt` / `.aoci/baseline.json` / `.aoci/ledger.jsonl` / `.aoci/verify_history` | AOCI 在仓库里到底写了什么、多大、何时写入 |
+
+对应只读端点 `GET /aoci-panel/cognition?repo=<路径>&bin=<aoci 可执行文件>`；解析与聚合在
+`lib/cognition.js`（纯 Node，不调用 aoci CLI、不写文件）。它与其他端点保持同样的只读边界：
+不修改 `aoci.txt` / `.aoci` 正式资产，`git log` 与 `verify_history` 都只是读取。
 
 ## 快捷动作与提示词
 
@@ -137,10 +167,11 @@ dsh-aoci-panel
 ├── package.json         # main=宿主半，exports["./client"]=浏览器 bundle，dsh.client 声明
 ├── cordis.patch.yml     # bundle patch 层：向宿主组合插入 dsh-aoci-panel 行
 └── lib
-    ├── index.js         # 宿主半：/aoci-panel/{state,entry,verify,workspaces,binding} 只读精确路由
+    ├── index.js         # 宿主半：/aoci-panel/{state,cognition,entry,verify,workspaces,binding} 只读精确路由
     │                    #         + /aoci-panel/{install,action,fix-binding}（GET 预检 / POST 执行）
+    ├── cognition.js     # 认知数据层：条目/约束/目录聚合、git 变更账本、verify 时间线、资产清单（纯 Node，只读）
     └── client.js        # 浏览器半：window.__ModuleLoader__.load 注册 conversation.view 标签页
-                         #         含多工作区总览、绑定诊断、安装向导、批量初始化与引导卡片
+                         #         含多工作区总览、认知视图、绑定诊断、安装向导、批量初始化与引导卡片
 ```
 
 - 宿主半是普通 Cordis 插件（`export { name, inject, apply }`），依赖 `webServer`；它只提供 JSON 端点，
@@ -155,6 +186,10 @@ dsh-aoci-panel
 pwsh -File scripts/install.ps1 -Mode link   # 装一次：profile 直连本仓库
 pwsh -File scripts/check.ps1                # 自检门：语法 / 交付清单 / 契约 / 行尾 / AOCI 基线
 pwsh -File scripts/install.ps1              # 发布前用 copy 模式做一次真实安装验证
+
+# 认知视图的两层测试（零外部依赖，不启动 DSH）
+node --test scripts/test-cognition.mjs        # 数据层：解析器 + 指标换算 + 真实仓库（TEST_REPO，默认 Gys）
+node scripts/test-client-cognition.mjs        # 浏览器半：用微型 React 替身真实渲染 5 个子视图
 ```
 
 ### 改动如何生效
