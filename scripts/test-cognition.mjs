@@ -10,7 +10,7 @@
 
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -25,10 +25,32 @@ import {
 /**
  * 真实仓库样本默认取本仓库（它自己就有 aoci.txt 与卷文件），因此 CI 里无需
  * 任何外部 checkout；要测更大的仓库时用 TEST_REPO 覆盖。
+ *
+ * 卷条目的分节头是 AOCI 生成时的绝对根路径。仓库里提交的是 Windows 路径，
+ * 因此在非 Windows 的 CI 上真实仓库用例会因根路径不一致而无法成立——此时显式
+ * 跳过并说明原因，而不是把环境差异判成失败。
  */
 const SELF_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const TEST_REPO = process.env.TEST_REPO || SELF_ROOT
 const HAS_INDEX = existsSync(path.join(TEST_REPO, 'aoci.txt'))
+
+const normalizeRoot = (value) => String(value || '').replace(/\\/g, '/').replace(/\/+$/, '')
+const INDEX_ROOT = (() => {
+  try {
+    const raw = readFileSync(path.join(TEST_REPO, 'aoci.code.txt'), 'utf8')
+    const match = /^===(.+?)===$/m.exec(raw)
+    return match ? normalizeRoot(match[1]) : ''
+  } catch {
+    return ''
+  }
+})()
+const ROOT_MATCHES = INDEX_ROOT === '' || INDEX_ROOT.toLowerCase() === normalizeRoot(path.resolve(TEST_REPO)).toLowerCase()
+const SKIP_REAL = !HAS_INDEX
+  ? `缺少索引：${TEST_REPO}`
+  : ROOT_MATCHES
+    ? false
+    : `索引根路径与当前仓库不一致（${INDEX_ROOT}），跳过真实仓库用例`
+
 
 test('parseManifest 读取元信息与卷声明', () => {
   const raw = [
@@ -112,7 +134,7 @@ test('aggregateDirs 按目录聚合条目/S/C9', () => {
   )
 })
 
-test('collectCognition 用构造的 governance 换算指标', { skip: HAS_INDEX ? false : `缺少索引：${TEST_REPO}` }, async () => {
+test('collectCognition 用构造的 governance 换算指标', { skip: SKIP_REAL }, async () => {
   const gov = {
     code_source_count: 100,
     code_entry_count: 98,
@@ -152,7 +174,7 @@ test('collectCognition 用构造的 governance 换算指标', { skip: HAS_INDEX 
   assert.equal(m.aligned, true)
 })
 
-test('collectCognition 缺治理快照时显式降级：不把未知写成 0/false', { skip: HAS_INDEX ? false : `缺少索引：${TEST_REPO}` }, async () => {
+test('collectCognition 缺治理快照时显式降级：不把未知写成 0/false', { skip: SKIP_REAL }, async () => {
   const data = await collectCognition(TEST_REPO, null)
   assert.equal(data.degraded, true)
   assert.ok(String(data.reason).includes('治理快照不可用'))
@@ -179,7 +201,7 @@ test('collectCognition 缺治理快照时显式降级：不把未知写成 0/fal
   assert.ok(data.constraints.length > 0, '约束视图不受影响')
 })
 
-test('collectCognition 采集真实仓库', { skip: HAS_INDEX ? false : `缺少索引：${TEST_REPO}` }, async () => {
+test('collectCognition 采集真实仓库', { skip: SKIP_REAL }, async () => {
   const data = await collectCognition(TEST_REPO, null)
   assert.equal(data.hasIndex, true, '需要仓库已有 aoci.txt')
   assert.ok(data.constraints.length > 0, '应解析出 S 约束')
