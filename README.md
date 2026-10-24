@@ -4,6 +4,28 @@
 加一个 **`AOCI`** 标签，点开即可看到**多工作区 AOCI 总览**、当前项目的索引概览、治理状态与条目浏览、
 MCP 绑定诊断与快捷动作；项目尚未构建 AOCI 时，可直接在面板里**引导式初始化**（单仓库或批量）。
 
+插件通过 DSH 官方插件机制安装（`dsh plugin add`），也可以从插件市场的「发现」页一键安装；
+面板顶栏显示自身版本与可复制的更新命令。
+
+## 快速开始
+
+```powershell
+# 从 npm 安装到默认 desktop profile（推荐）
+dsh plugin --profile desktop add dsh-aoci-panel
+
+# 开发本仓库：把当前目录链接进 profile（改完保存即生效，宿主半仍需重启）
+dsh plugin --profile desktop add C:\Users\me\Desktop\dsh-aoci-panel
+```
+
+装完**重启 DSH**，打开任意会话顶部的 `AOCI` 标签。卸载：
+
+```powershell
+dsh plugin --profile desktop remove dsh-aoci-panel
+```
+
+> 桌面版默认不把 `dsh` 加进 PATH。可在桌面版「设置 → 通用 → Manage dsh Command…」安装命令行，
+> 或直接用 `scripts/install.ps1`（它会自动找到桌面版自带的 CLI）。
+
 ## 功能
 
 | 标签 | 内容 |
@@ -15,7 +37,8 @@ MCP 绑定诊断与快捷动作；项目尚未构建 AOCI 时，可直接在面�
 | 认知 | 回答「AOCI 对这个仓库做了什么、对开发者有什么用」：5 张价值卡（记忆覆盖 / 约束缺口 / 索引预算 / 治理状态 / 最近认知更新）+ 5 个子视图（变更账本 / 开发须知 / 认知地图 / 健康时间线 / 资产清单），全部来自仓库内既有产物，只读 |
 | 引导 | 顶部「引导」按钮：AOCI 概念、生命周期、面板区块说明、常用 CLI 命令速查 |
 
-顶部工具条提供：**标签切换**、**引导**、**数据时间**、**刷新**、**校验**（真实执行一次 `aoci verify`）；
+顶部工具条提供：**标签切换**、**引导**、**版本/更新**（当前版本、最新版本与可复制的更新命令）、
+**数据时间**、**刷新**、**校验**（真实执行一次 `aoci verify`）；
 单仓库标签内另有**仓库切换**（来自 DSH 已注册工作区，默认自动定位到当前会话所在项目）与
 **aoci 二进制切换**（自动探测目录下所有 `aoci*.exe` 并按 rc 版本降序，rc19+ 优先）。
 
@@ -95,54 +118,132 @@ init（+scan）+ DSH 接入，每个仓库独立行 id / serverName（防碰撞�
 
 ## 环境要求
 
-- DSH（DeepSeek Harness）桌面版，或任意带 Web 前端的 profile
-- 已由 AOCI 建立认知索引的仓库（没有的话直接用上面的安装向导）
+- **Windows 桌面版 DSH `>= 0.2.0-rc.1`**（`package.json` 的 `engines.dsh` 会在安装时校验）
+- 已由 AOCI 建立认知索引的仓库（没有的话直接用面板里的安装向导）
 - aoci CLI：面板的功能分两档 ——
   - **展示索引内容**：不需要 CLI（直接解析 `aoci.txt` 与各卷文件，离线可用）；
-  - **治理事实 / 校验 / 安装向导**：需要本机 aoci CLI（默认探测 `C:\aoci\bin`，可在向导里改）。
+  - **治理事实 / 校验 / 安装向导**：需要本机 aoci CLI（默认探测 `C:\aoci\bin`，可在面板里改，
+    也可用配置项 `binDir` / `binPath` 覆盖）。
 
 ## 安装
 
-### 方式一：一键脚本（推荐）
+### 方式一：官方插件命令（推荐）
 
 ```powershell
-pwsh -File scripts/install.ps1                  # copy 模式（默认）：按 files 清单拷贝，与 npm 发布内容一致
-pwsh -File scripts/install.ps1 -Mode link       # link 模式：profile 直连本仓库（junction），开发用
-pwsh -File scripts/install.ps1 -Profile web     # 或指定 profile
-pwsh -File scripts/install.ps1 -WhatIfOnly      # 只看它打算做什么
+dsh plugin --profile desktop add dsh-aoci-panel        # 从 npm 安装最新版
+dsh plugin --profile desktop add dsh-aoci-panel@0.5.0  # 固定版本
+dsh plugin --profile desktop add C:\path\to\repo       # 本地链接（开发用）
 ```
 
-脚本做三件事，并且是幂等的：
+这条命令由 DSH 转发给 pnpm，在 profile 目录里完成三件事，**不需要手工拷贝或改 JSON**：
 
-1. 把本包放进 `$DSH_HOME/profiles/<profile>/node_modules/dsh-aoci-panel`
-2. 在该 profile 的 `package.json` 的 `dsh.profile.bundles` 末尾追加 `"dsh-aoci-panel"`（改之前自动备份为 `package.json.bak-aoci`）
-3. 打印本次改动需要的生效方式
+1. 写入 profile 的 `dependencies`；
+2. 安装到 `profiles/<profile>/node_modules`；
+3. 把 `dsh-aoci-panel` 追加进 `dsh.profile.bundles`。
 
-第 1 步的清单**不硬编码**：`copy` 模式直接读 `package.json` 的 `files`，安装内容与 npm 发布内容因此不会各自漂移；
-`link` 模式只建一个目录联接，改完保存即生效。发布前请用默认的 `copy` 模式再验一次真实安装。
+`desktop` profile 由桌面应用独占管理，但 `dsh plugin --profile desktop ...` 是官方允许的入口。
 
-### 方式二：手工三步
+### 方式二：Windows 脚本（薄封装）
+
+`scripts/install.ps1` 只是上面命令的包装：自动定位桌面版自带的 `dsh.cmd`、探测 DSH home，
+并在安装后校验 profile 清单确实登记了依赖与 bundle。
 
 ```powershell
-$prof = "$env:USERPROFILE\.dsh\profiles\desktop"
-New-Item -ItemType Directory -Force -Path "$prof\node_modules\dsh-aoci-panel\lib" | Out-Null
-Copy-Item .\package.json, .\cordis.patch.yml "$prof\node_modules\dsh-aoci-panel\" -Force
-Copy-Item .\lib\*.js "$prof\node_modules\dsh-aoci-panel\lib\" -Force
+pwsh -File scripts/install.ps1                     # 本地链接（开发）
+pwsh -File scripts/install.ps1 -Mode registry      # 从 npm 安装/更新
+pwsh -File scripts/install.ps1 -Mode registry -Version 0.4.2  # 回滚到指定版本
+pwsh -File scripts/install.ps1 -Profile web        # 指定 profile
+pwsh -File scripts/install.ps1 -Mode uninstall     # 卸载
+pwsh -File scripts/install.ps1 -WhatIfOnly         # 只打印将执行的命令
 ```
 
-然后编辑 `$prof\package.json`，在 `dsh.profile.bundles` 数组里加一项 `"dsh-aoci-panel"`，重启 DSH。
+旧参数 `-Mode link` / `-Mode copy` 都按 `local` 处理，`-Uninstall` 等价于 `-Mode uninstall`。
 
-插件包靠两点被发现：profile 的 `dsh.profile.bundles` 列出它，包内 `cordis.patch.yml` 插入宿主行；
-`package.json` 的 `dsh.client` 声明让 Web 前端加载 `./client` 浏览器 bundle。
+### 方式三：插件市场「发现」
+
+本仓库维护一个市场索引（见「插件市场」一节）。在 DSH 中：
+
+1. 打开 **插件** → **实验性插件** 旁的 **更多**，启用 **自定义插件市场**；
+2. 进入 **发现** → **添加索引源**，填入
+   `https://donyue7.github.io/dsh-aoci-panel/index.json`；
+3. 找到 **AOCI 认知面板** → **安装**，确认后走的就是官方安装流程。
 
 ### 卸载
 
 ```powershell
-pwsh -File scripts/install.ps1 -Uninstall
+dsh plugin --profile desktop remove dsh-aoci-panel
+# 或
+pwsh -File scripts/install.ps1 -Mode uninstall
 ```
 
-或手工：删掉 `dsh.profile.bundles` 里那一行（也可直接还原 `package.json.bak-aoci`），
-再删掉 `node_modules\dsh-aoci-panel` 目录，重启。
+## 配置
+
+宿主半支持 profile 级配置。在 `$DSH_HOME/profiles/<profile>/cordis.patch.yml` 里按行 id 覆盖
+（`dsh` 的组合层会把它应用在本 bundle 之后）：
+
+```yaml
+- id: dsh-aoci-panel
+  name: dsh-aoci-panel
+  config:
+    binDir: 'D:\aoci\bin'
+    cacheTtlMs: 60000
+    updateCheck: false
+```
+
+| 字段 | 默认值 | 说明 |
+| --- | --- | --- |
+| `binDir` | `C:\aoci\bin` | aoci 可执行文件所在目录；面板内仍可临时切换 |
+| `binPath` | `''` | 直接指定可执行文件；非空时优先于 `binDir` |
+| `cliTimeoutMs` | `120000` | 单次 aoci CLI 调用超时（1000–3600000） |
+| `cacheTtlMs` | `0` | 快照缓存有效期；`0` = 进程内一直有效，直到显式刷新（0–86400000） |
+| `batchLimit` | `20` | 批量初始化允许的仓库数上限（1–100） |
+| `locale` | `zh-CN` | 安装向导默认 locale（`zh-CN` / `en-US`） |
+| `updateCheck` | `true` | 是否查询 npm registry 检查插件自身新版本 |
+| `registryUrl` | `https://registry.npmjs.org` | registry 地址，可指向私有镜像 |
+| `updateCheckTimeoutMs` | `5000` | 更新检查超时（500–60000） |
+| `updateCheckTtlMs` | `21600000` | 更新检查结果的内存缓存（0–604800000） |
+| `profile` | `''` | 更新命令里的 profile；留空读 `DSH_PROFILE`，再回退 `desktop` |
+
+配置在装载时校验：类型错误、越界、非法 URL、拼错的字段都会让本行装载失败并在日志里报错，
+不会带着错误默认值继续运行。`/aoci-panel/about` 会回显实际生效的关键配置。
+
+## 更新
+
+面板顶栏的 **`v0.5.0`** 按钮打开「插件版本与更新」卡片：当前版本、安装 profile、
+最新版本、检查时间与一条可复制的命令：
+
+```powershell
+dsh plugin --profile desktop add dsh-aoci-panel@latest
+```
+
+更新检查只读 npm registry 的 `latest` 标签，带超时与内存缓存；网络不可用时静默降级
+（卡片显示原因，面板其余功能不受影响）。**面板不会自动执行更新**：改 profile 必须重启 DSH 才会装载新的宿主半。
+
+回滚：
+
+```powershell
+dsh plugin --profile desktop add dsh-aoci-panel@0.4.2
+```
+
+## 插件市场
+
+`market/index.json` 是 DSH 插件市场索引，由 `scripts/market-index.mjs` 从 npm registry 生成
+（版本、发布时间、`engines.dsh` 都取自 registry，不手工维护）：
+
+```powershell
+npm run market                 # 重新生成 market/index.json 与 market/icons/aoci.svg
+node scripts/market-index.mjs --check   # 只校验
+```
+
+GitHub Actions 的 `Market Index` 工作流会在这些时机重新生成并发布到 GitHub Pages
+（`https://donyue7.github.io/dsh-aoci-panel/index.json`）：
+
+- `main` 上 `market/`、`icon.svg` 或生成脚本变更；
+- `Publish Package` 工作流成功之后（新版本刚发布时索引自动跟上）；
+- 每天定时（`17 3 * * *`）与手动触发。
+
+因此发布新版本后通常**不需要**手工改索引；本地 `npm run market` 只是让仓库里的快照与线上一致。
+首次启用需在仓库 **Settings → Pages** 把 Source 设为 **GitHub Actions**。
 
 ## 数据来源与缓存语义
 
@@ -162,7 +263,7 @@ pwsh -File scripts/install.ps1 -Uninstall
 - **缓存**：宿主按仓库在内存里缓存快照（单仓库深快照与工作区轻量状态分开缓存）。
   **切换标签、重开面板、重新挂载都不会重新取数**；只有「刷新」「校验」与快捷动作 verify/check
   才触发重算（安装成功也会令该仓库缓存失效）。顶部 `数据 HH:MM:SS` 标明这份快照的时间。
-  缓存活在本进程内，DSH 重启后首次打开会重新计算。
+  默认缓存活在本进程内、DSH 重启后首次打开会重新计算；把 `cacheTtlMs` 设为正数可让它按时间自动过期。
 - **体验**：搜索 / 排序、区块折叠、最近操作时间线、错误码人话解释、数据时间与 aoci 版本标注；
   全部配色走 `--dsw-alias-*` 主题令牌，深色主题自动适配；窄屏下工具条与网格自动换行。
 
@@ -171,17 +272,24 @@ pwsh -File scripts/install.ps1 -Uninstall
 ```
 dsh-aoci-panel
 ├── package.json         # main=宿主半，exports["./client"]=浏览器 bundle，dsh.client 声明
+│                        # exports["./locale/*.json"] / "./icon" 供插件管理器读取显示元数据
 ├── cordis.patch.yml     # bundle patch 层：向宿主组合插入 dsh-aoci-panel 行
+├── locale/{en,zh}.json  # meta.title / meta.description（插件管理器不激活插件也能读）
+├── icon.svg             # 插件图标（≤256 KiB）
+├── market/              # DSH 插件市场索引与图标（GitHub Pages 托管）
 └── lib
-    ├── index.js         # 宿主半：/aoci-panel/{state,cognition,entry,verify,workspaces,binding} 只读精确路由
+    ├── index.js         # 宿主半：/aoci-panel/{state,cognition,entry,verify,workspaces,binding,about} 只读精确路由
     │                    #         + /aoci-panel/{install,action,fix-binding}（GET 预检 / POST 执行）
+    ├── config.js        # 配置默认值、规格化与校验（装载期响亮失败）
+    ├── about.js         # 版本比较、registry 更新检查、更新命令生成
     ├── cognition.js     # 认知数据层：条目/约束/目录聚合、git 变更账本、verify 时间线、资产清单（纯 Node，只读）
     └── client.js        # 浏览器半：window.__ModuleLoader__.load 注册 conversation.view 标签页
-                         #         含多工作区总览、认知视图、绑定诊断、安装向导、批量初始化与引导卡片
+                         #         含多工作区总览、认知视图、绑定诊断、安装向导、批量初始化、版本/更新与引导卡片
 ```
 
 - 宿主半是普通 Cordis 插件（`export { name, inject, apply }`），依赖 `webServer`；它只提供 JSON 端点，
   浏览器半用同源 `fetch` 取数。
+- `apply(ctx, config)` 先做配置校验，再注册路由；路由注册异常不会阻断 profile 启动。
 - 浏览器半注册进 `conversation.view`（`id: aoci`, `order: 30`），所以它与「对话 / 轨迹 / 上下文」同级并列，
   不替换任何既有 UI。
 - 装载失败被 `apply` 内的 try/catch 包住：一个可选只读面板不会阻断 profile 启动。
@@ -189,18 +297,24 @@ dsh-aoci-panel
 ## 开发
 
 ```powershell
-pwsh -File scripts/install.ps1 -Mode link   # 装一次：profile 直连本仓库
-pwsh -File scripts/check.ps1                # 自检门：语法 / 交付清单 / 契约 / 行尾 / AOCI 基线
-pwsh -File scripts/install.ps1              # 发布前用 copy 模式做一次真实安装验证
+pwsh -File scripts/install.ps1                 # 本地链接进 desktop profile（改完保存即生效）
+node scripts/check.mjs                         # 自检门（跨平台，零依赖）
+npm test                                       # 全部单元测试 + 浏览器半冒烟
+pwsh -File scripts/install.ps1 -Mode registry  # 发布前用 registry 版本做一次真实安装验证
+npm run market                                 # 发布后刷新市场索引
+```
 
-# 认知视图的两层测试（零外部依赖，不启动 DSH）
-node --test scripts/test-cognition.mjs        # 数据层：解析器 + 指标换算 + 真实仓库（TEST_REPO，默认 Gys）
-node scripts/test-client-cognition.mjs        # 浏览器半：用微型 React 替身真实渲染 5 个子视图
+`npm test` 覆盖四层，全部离线、不启动 DSH：
+
+```powershell
+node --test scripts/test-cognition.mjs   # 数据层：解析器 + 指标换算 + 本仓库只读采集（TEST_REPO 可覆盖）
+node --test scripts/test-host.mjs        # 宿主半：配置校验 / 版本比较 / 更新检查 / 市场索引
+node scripts/test-client-cognition.mjs   # 浏览器半：用微型 React 替身真实渲染 5 个子视图
 ```
 
 ### 改动如何生效
 
-这两条不是经验之谈，是在本机 DSH Desktop 2.0.13 上对着实现核对过的：
+这两条不是经验之谈，是在本机 DSH Desktop 0.2.1-rc.3 上对着实现核对过的：
 
 | 改哪里 | 生效方式 | 依据 |
 | --- | --- | --- |
@@ -211,21 +325,27 @@ node scripts/test-client-cognition.mjs        # 浏览器半：用微型 React �
 
 ### 自检门查什么
 
-`scripts/check.ps1` 只用 pwsh + node，不需要 aoci CLI：
+`node scripts/check.mjs` 只用 Node 内置模块，不需要 aoci CLI；`scripts/check.ps1` 只是它的 pwsh 薄封装。
+CI（`.github/workflows/ci.yml`）在 Windows 与 Ubuntu 上都会跑。
 
-1. `package.json` 的宿主半 / 浏览器半 / 补丁层 / 插槽声明齐全
-2. `files` 清单列出的路径都真实存在
+1. `package.json` 的宿主半 / 浏览器半 / 补丁层 / 显示资源 / `engines.dsh` 声明齐全
+2. `files` 清单列出的路径都真实存在（支持目录与 `*` / `**`）
 3. `main`、`exports`、`dsh.bundle.patch` 都落在交付内容里
 4. JS 里的相对 import 都落在交付内容里
 5. `cordis.patch.yml` 的 id/name 等于包名
-6. 交付文件是 LF 行尾（`.gitattributes` 强制 LF；CRLF 会让 AOCI 基线整树 Stale）
-7. `node --check` 语法
-8. 受管文件相对 `.aoci/baseline.json` 的漂移（默认 WARN，`-RequireAociAligned` 时 FAIL，适合提交前跑）
+6. `locale/*.json` 都有非空 `meta.title` / `meta.description`，且必须有 `en.json`
+7. 图标存在、格式可识别、不超过 256 KiB
+8. 交付文件是 LF 行尾（`.gitattributes` 强制 LF；CRLF 会让 AOCI 基线整树 Stale）
+9. `node --check` 语法
+10. `market/index.json` 与当前版本一致（缺失或落后时 WARN）
+11. 受管文件相对 `.aoci/baseline.json` 的漂移（默认 WARN，`--require-aoci-aligned` 时 FAIL，适合提交前跑）
 
 第 3、4 项是这份脚本存在的理由：`files` 与安装脚本曾经各写一份清单，而漏项的后果是**发布出去的包缺文件**。
+第 6、7 项对应 DSH 插件管理器：它不激活插件也要读标题、描述与图标。
 
 ## 已知限制
 
+- **Windows 桌面版专属**：路径探测、安装脚本与文档都按 Windows 桌面版设计；未验证 macOS / Linux。
 - **除安装向导与「修复绑定」外只读**：面板不写业务文件、不修改 `aoci.txt` / `.aoci` 正式资产；
   显式触发的写入仅限目标仓库的 aoci init/scan 产物、可选的 DSH 补丁行追加/归一（备份 + 幂等 + 防碰撞，见上）；
   「校验 / 快捷动作 verify」会让 aoci 自己追加 `.aoci/verify_history` 审计记录（该目录已被 `.aoci/.gitignore` 忽略）。
@@ -234,18 +354,19 @@ node scripts/test-client-cognition.mjs        # 浏览器半：用微型 React �
   serverName 冲突的**改名**不自动做（会改变会话里的工具命名空间），需人工裁决。
 - 多工作区总览按工作区逐个调 CLI（轻量 `status --json`），工作区很多时首屏会慢一些；
   面板端有防抖（切换仓库不重复取数）与失败重试（「刷新」按钮），CLI 不可用时自动降级离线只读。
-- 本包是**本地包**，只登记在 `dsh.profile.bundles`、未写进 `dependencies`，以避免 `pnpm install`
-  去 npm 拉同名包。若你用插件市场装卸其他插件导致 bundles 被重写，标签可能消失，把那一行加回即可。
-- 面板是宿主进程内的会话期缓存；重启后首屏需要重新取数。
+- 面板是宿主进程内的会话期缓存；重启后首屏需要重新取数（可用 `cacheTtlMs` 让它按时间过期）。
 - **桌面版宿主半没有模块热重载**：`lib/index.js` 的改动必须重启 DSH（原因见「开发」一节）。
-- `-Mode link` 是开发便利：profile 里的 `node_modules/dsh-aoci-panel` 会变成指向本仓库的目录联接。
-  `pnpm install`、插件市场装卸等操作可能把它换回真实目录或清掉 `bundles` 里的那一行，重跑脚本即可。
+- 本地链接安装（`dsh plugin add <目录>`）是开发便利：`pnpm install`、插件市场装卸等操作可能把它换回
+  真实目录，重跑一次 `dsh plugin add <目录>` 即可。正式使用请安装 registry 版本。
+- 更新检查依赖 npm registry 可达；企业镜像或离线环境可用 `registryUrl` / `updateCheck` 调整。
 
 ## 故障排查
 
 | 现象 | 排查 |
 | --- | --- |
-| 标签栏没有 `AOCI` | profile 的 `dsh.profile.bundles` 是否含 `dsh-aoci-panel`；是否重启过 DSH；DSH 日志中搜 `dsh-aoci-panel` |
+| 标签栏没有 `AOCI` | 先 `dsh plugin --profile desktop list` 确认已安装；profile 的 `dsh.profile.bundles` 是否含 `dsh-aoci-panel`；是否重启过 DSH；DSH 日志中搜 `dsh-aoci-panel` |
+| 顶栏版本按钮显示「检查更新失败」 | registry 不可达或代理未配置；用 `registryUrl` 指向镜像，或 `updateCheck: false` 关闭检查（不影响面板使用） |
+| 执行更新命令后版本没变 | 更新改的是 profile 依赖，必须重启 DSH；确认命令里的 `--profile` 与当前运行的一致（版本卡片会显示） |
 | 卡片显示「未取得治理事实」 | 看卡片底部 `CLI:` 行的 `通道=` 与 `尝试=` 列表，以及下方的错误详情；CLI 全不可用时面板自动降级为离线只读（基线 + ledger） |
 | 治理数字可疑（业务源文件 = 0） | 典型沙箱拦截迹象：CLI 被围栏后无法枚举业务源清单，请以终端里手跑的 `aoci verify` 为准 |
 | 会话里拿不到某仓库的 aoci 工具 | 打开「绑定诊断」标签：看是否未绑定 / serverName 冲突 / 绑错仓库，按卡片给的修复动作处理；重启 DSH 后生效 |

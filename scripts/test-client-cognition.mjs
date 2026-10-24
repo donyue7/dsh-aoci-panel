@@ -20,9 +20,12 @@ import vm from 'node:vm'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const source = readFileSync(join(here, '..', 'lib', 'client.js'), 'utf8')
-	// 测试钩子：把 CognitionView 暴露出来（真实运行时导出面不变）
-	.replace('module.exports = {', 'module.exports = { __test: { CognitionView },')
-assert.ok(source.includes('__test: { CognitionView }'), 'client.js 导出结构已变化，请更新测试钩子')
+	// 测试钩子：把组件暴露出来（真实运行时导出面不变）
+	.replace('module.exports = {', 'module.exports = { __test: { CognitionView, AboutCard },')
+assert.ok(
+	source.includes('__test: { CognitionView, AboutCard }'),
+	'client.js 导出结构已变化，请更新测试钩子',
+)
 
 const FIXTURE = {
 	hasIndex: true,
@@ -207,4 +210,34 @@ assert.ok(assets.includes('.aoci/verify_history'), '资产清单应含历史目�
 assert.ok(assets.includes('145.0') === false, '不应把目录大小当字节展示')
 assert.ok(assets.includes('—') || assets.includes('缺失'), '目录资产的尺寸应显示占位符')
 
-console.log('client cognition smoke: OK (5 views rendered)')
+const AboutCard = mod.__test && mod.__test.AboutCard
+assert.ok(typeof AboutCard === 'function', 'AboutCard 应可用')
+
+state.values = []
+state.cursor = 0
+const aboutBody = text(AboutCard({
+	about: {
+		version: '0.5.0',
+		profile: 'desktop',
+		enabled: true,
+		checkedAt: 1760953990000,
+		latest: '0.6.0',
+		updateAvailable: true,
+		updateCommand: 'dsh plugin --profile desktop add dsh-aoci-panel@latest',
+		homepage: 'https://github.com/donyue7/dsh-aoci-panel',
+		config: { binDir: 'C:\\aoci\\bin', cacheTtlMs: 0 },
+	},
+	busy: false,
+	onCheck: () => {},
+}))
+for (const expected of ['插件版本与更新', 'v0.5.0', 'desktop', 'v0.6.0', '有新版本可用', '复制更新命令', 'dsh plugin --profile desktop add dsh-aoci-panel@latest']) {
+	assert.ok(aboutBody.includes(expected), '版本卡片应包含：' + expected)
+}
+assert.ok(!aboutBody.includes('undefined'), '版本卡片不应出现 undefined')
+
+state.values = []
+state.cursor = 0
+const aboutOff = text(AboutCard({ about: { version: '0.5.0', enabled: false, config: {} }, busy: false }))
+assert.ok(aboutOff.includes('更新检查已关闭'), '关闭更新检查时应说明原因')
+
+console.log('client cognition smoke: OK (5 views + about card rendered)')

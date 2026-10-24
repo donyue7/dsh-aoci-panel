@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "AOCI Cognition Panel",
+    "description": "Views AOCI cognition, governance facts and MCP binding for every workspace, and initializes projects that have no AOCI index yet."
+  }
+}

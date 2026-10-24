@@ -1,0 +1,56 @@
+name: CI
+
+# 每次 push 与 PR 都跑自检门 + 单元测试。自检门（scripts/check.mjs）是跨平台的，
+# 因此两个平台都跑：Windows 是插件的目标平台，Ubuntu 保证脚本没有偷偷依赖 pwsh。
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: 自检门（契约 / 交付清单 / 显示资源 / 行尾 / 语法 / 市场索引）
+        run: node scripts/check.mjs
+
+      - name: 单元测试（配置 / 版本 / 更新检查 / 市场 / 认知解析 / 浏览器半冒烟）
+        run: npm test
+
+      - name: 市场索引可校验
+        run: node scripts/market-index.mjs --check
+
+  # Windows 额外验证 pwsh 薄封装仍可用（check.ps1 → check.mjs）。
+  pwsh-wrapper:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: pwsh 入口
+        shell: pwsh
+        run: ./scripts/check.ps1

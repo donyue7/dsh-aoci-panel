@@ -11,13 +11,14 @@ name: Publish Package
 #   Environment name : 留空
 #   Allowed actions  : 必须勾选 "npm publish"（2026-09-03 之后的新配置默认只允许 npm stage publish）
 #
-# 两个已踩过的坑（改本文件时不要退回）：
+# 三个已踩过的坑（改本文件时不要退回）：
 #   1) setup-node 不要设 registry-url：它写入的空 `_authToken` 会顶掉 OIDC 鉴权，发布报 E404。
 #   2) 本工作流需要 npm >= 11.5.1；setup-node 自带的 npm 版本较低，必须先升级。
+#   3) 发布前必须先过自检门与测试；tag 必须是 v<package.json version>，否则拒绝发布。
 #
 # 发布方式：
-#   1) 打 tag：git tag v0.1.2 && git push origin v0.1.2
-#   2) 或在仓库 Actions 页面手动 Run workflow（workflow_dispatch）
+#   1) 改 package.json 的 version，提交后打 tag：git tag v0.5.0 && git push origin v0.5.0
+#   2) 或在仓库 Actions 页面手动 Run workflow（workflow_dispatch，跳过 tag 校验）
 
 on:
   push:
@@ -45,6 +46,25 @@ jobs:
           node -v
           npm install -g npm@^11
           npm -v
+
+      - name: 校验 tag 与 package.json 版本一致
+        if: github.ref_type == 'tag'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [ "$GITHUB_REF_NAME" != "v$VERSION" ]; then
+            echo "::error::tag $GITHUB_REF_NAME 与 package.json 版本 v$VERSION 不一致"
+            exit 1
+          fi
+          echo "tag $GITHUB_REF_NAME 与版本一致"
+
+      - name: 自检门
+        run: node scripts/check.mjs
+
+      - name: 单元测试
+        run: npm test
+
+      - name: 市场索引可校验
+        run: node scripts/market-index.mjs --check
 
       - name: 检查该版本是否已发布
         id: check

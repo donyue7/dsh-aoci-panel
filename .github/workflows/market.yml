@@ -1,0 +1,64 @@
+name: Market Index
+
+# 把 market/ 发布到 GitHub Pages，供 DSH「发现 → 添加索引源」使用：
+#   https://donyue7.github.io/dsh-aoci-panel/index.json
+#
+# 索引在发布前用 npm registry 现场重新生成（版本、发布时间、engines.dsh 都取自
+# registry），因此新版本发布后无需手工改 market/index.json；每天也会定时刷新。
+#
+# 首次使用前需在仓库 Settings → Pages 把 Source 设为 "GitHub Actions"。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'market/**'
+      - 'icon.svg'
+      - 'scripts/market-index.mjs'
+      - '.github/workflows/market.yml'
+  # 发布成功后立即刷新索引（npm registry 可能延迟几秒才可见）。
+  workflow_run:
+    workflows: ['Publish Package']
+    types: [completed]
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: 从 npm registry 重新生成索引
+        run: node scripts/market-index.mjs
+
+      - name: 校验生成的索引与图标
+        run: node scripts/market-index.mjs --check
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: market
+
+      - id: deployment
+        uses: actions/deploy-pages@v5

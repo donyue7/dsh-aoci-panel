@@ -1,6 +1,6 @@
 {
   "name": "dsh-aoci-panel",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "AOCI 认知面板：多工作区总览、认知视图（价值卡、变更账本、开发须知、认知地图、健康时间线、资产清单）、单仓库索引与治理状态、绑定诊断、快捷动作与提示词，并为未接入的项目提供单仓库与批量引导式初始化。",
   "type": "module",
   "author": "donyue7",
@@ -13,23 +13,33 @@
     "url": "https://github.com/donyue7/dsh-aoci-panel/issues"
   },
   "main": "lib/index.js",
+  "engines": {
+    "dsh": ">=0.2.0-rc.1",
+    "node": ">=20"
+  },
   "scripts": {
-    "check": "pwsh -NoProfile -File scripts/check.ps1",
-    "install:link": "pwsh -NoProfile -File scripts/install.ps1 -Mode link",
-    "install:copy": "pwsh -NoProfile -File scripts/install.ps1",
-    "uninstall": "pwsh -NoProfile -File scripts/install.ps1 -Uninstall",
-    "test": "node --test scripts/test-cognition.mjs && node scripts/test-client-cognition.mjs"
+    "check": "node scripts/check.mjs",
+    "check:pwsh": "pwsh -NoProfile -File scripts/check.ps1",
+    "install:link": "pwsh -NoProfile -File scripts/install.ps1 -Mode local",
+    "install:registry": "pwsh -NoProfile -File scripts/install.ps1 -Mode registry",
+    "uninstall": "pwsh -NoProfile -File scripts/install.ps1 -Mode uninstall",
+    "market": "node scripts/market-index.mjs",
+    "test": "node --test scripts/test-cognition.mjs scripts/test-host.mjs && node scripts/test-client-cognition.mjs"
   },
   "exports": {
     ".": {
       "default": "./lib/index.js"
     },
     "./client": "./lib/client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
     "./package.json": "./package.json"
   },
   "files": [
     "lib/",
-    "cordis.patch.yml"
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg"
   ],
   "dsh": {
     "bundle": {

@@ -1,0 +1,119 @@
+{
+  "format": 1,
+  "title": {
+    "en": "AOCI plugins",
+    "zh": "AOCI 插件"
+  },
+  "description": {
+    "en": "Plugins that bring AOCI repository cognition into DeepSeek Harness.",
+    "zh": "把 AOCI 仓库认知带进 DeepSeek Harness 的插件。"
+  },
+  "metadata": {
+    "categories": {
+      "aoci": {
+        "title": {
+          "en": "AOCI",
+          "zh": "AOCI 认知"
+        }
+      }
+    },
+    "labels": {
+      "cognition": {
+        "title": {
+          "en": "Cognition",
+          "zh": "认知"
+        }
+      },
+      "governance": {
+        "title": {
+          "en": "Governance",
+          "zh": "治理"
+        }
+      },
+      "workspace": {
+        "title": {
+          "en": "Workspace",
+          "zh": "工作区"
+        }
+      }
+    }
+  },
+  "plugins": [
+    {
+      "name": "dsh-aoci-panel",
+      "title": {
+        "en": "AOCI Cognition Panel",
+        "zh": "AOCI 认知面板"
+      },
+      "description": {
+        "en": "AOCI cognition, governance and MCP binding for every workspace, plus guided initialization for projects without an index.",
+        "zh": "按工作区查看 AOCI 认知、治理事实与 MCP 绑定，并为尚未建立索引的项目提供引导式初始化。"
+      },
+      "author": "donyue7",
+      "homepage": "https://github.com/donyue7/dsh-aoci-panel",
+      "repository": {
+        "url": "https://github.com/donyue7/dsh-aoci-panel"
+      },
+      "icon": "icons/aoci.svg",
+      "metadata": {
+        "category": "aoci",
+        "labels": [
+          "cognition",
+          "governance",
+          "workspace"
+        ]
+      },
+      "versions": [
+        {
+          "version": "0.4.2",
+          "publishTimestamp": 1792496645,
+          "source": {
+            "type": "npm"
+          }
+        },
+        {
+          "version": "0.4.1",
+          "publishTimestamp": 1792494969,
+          "source": {
+            "type": "npm"
+          }
+        },
+        {
+          "version": "0.4.0",
+          "publishTimestamp": 1792493781,
+          "source": {
+            "type": "npm"
+          }
+        },
+        {
+          "version": "0.3.0",
+          "publishTimestamp": 1792342546,
+          "source": {
+            "type": "npm"
+          }
+        },
+        {
+          "version": "0.2.0",
+          "publishTimestamp": 1790151841,
+          "source": {
+            "type": "npm"
+          }
+        },
+        {
+          "version": "0.1.1",
+          "publishTimestamp": 1790144211,
+          "source": {
+            "type": "npm"
+          }
+        },
+        {
+          "version": "0.1.0",
+          "publishTimestamp": 1790006937,
+          "source": {
+            "type": "npm"
+          }
+        }
+      ]
+    }
+  ]
+}
