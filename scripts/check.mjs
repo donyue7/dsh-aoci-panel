@@ -328,22 +328,54 @@ function findAociBin() {
   return ''
 }
 
+/**
+ * 解析卷条目，返回相对仓库根的路径集合。
+ *
+ * volumes-v1 的漂移以正式索引为准；本地回退需要它来区分「索引仍声明的文件被删」
+ * （真漂移）与「基线里残留、索引早已不声明的旧文件」（机器状态残留，可忽略）。
+ */
+function indexEntryPaths() {
+  const paths = new Set()
+  for (const volume of ['aoci.code.txt', 'aoci.meta.txt']) {
+    const file = path.join(ROOT, volume)
+    if (!existsSync(file)) continue
+    let dir = ''
+    for (const raw of readFileSync(file, 'utf8').split(/\r?\n/)) {
+      const line = raw.trim()
+      const section = /^===(.+?)===$/.exec(line)
+      if (section) {
+        dir = section[1]
+        continue
+      }
+      const entry = /^([^[\]\s][^[\]]*)\[[A-Z0-9-]+\]:/.exec(line)
+      if (!entry || !dir) continue
+      const rel = path.relative(ROOT, path.join(dir, entry[1])).replace(/\\/g, '/')
+      if (rel && !rel.startsWith('..')) paths.add(rel)
+    }
+  }
+  return paths
+}
+
 function baselineDrift() {
   const baselinePath = path.join(ROOT, '.aoci', 'baseline.json')
-  if (!existsSync(baselinePath)) return { changed: [], missing: [], absent: true }
+  if (!existsSync(baselinePath)) return { changed: [], missing: [], residue: [], absent: true }
   const baseline = readJson(baselinePath)
+  const indexed = indexEntryPaths()
   const changed = []
   const missing = []
+  const residue = []
   for (const [file, info] of Object.entries(baseline.files || {})) {
     const full = path.join(ROOT, file)
     if (!existsSync(full)) {
-      missing.push(file)
+      // 索引已不声明该文件：只是基线里没被 scan 剪掉的旧键，不是认知漂移。
+      if (indexed.has(file.replace(/\\/g, '/'))) missing.push(file)
+      else residue.push(file)
       continue
     }
     const hash = createHash('sha256').update(readFileSync(full)).digest('hex')
     if (info && info.sha256 && hash !== info.sha256) changed.push(file)
   }
-  return { changed, missing, absent: false }
+  return { changed, missing, residue, absent: false }
 }
 
 await test('AOCI 基线漂移', () => {
@@ -377,12 +409,13 @@ await test('AOCI 基线漂移', () => {
 
   const drift = baselineDrift()
   if (drift.absent) return { level: 'WARN', detail: '没有 .aoci/baseline.json，跳过' }
-  if (drift.changed.length === 0 && drift.missing.length === 0) return '与基线一致'
+  const residue = drift.residue.length > 0 ? `（基线残留 ${drift.residue.join('、')}，索引已不声明，忽略）` : ''
+  if (drift.changed.length === 0 && drift.missing.length === 0) return '与基线一致' + residue
   const detail = []
   if (drift.changed.length > 0) detail.push('已改：' + drift.changed.join('、'))
   if (drift.missing.length > 0) detail.push('已删：' + drift.missing.join('、'))
   detail.push('收尾时需按 AOCI Guide 维护认知')
-  return { level: requireAligned ? 'FAIL' : 'WARN', detail: detail.join('；') }
+  return { level: requireAligned ? 'FAIL' : 'WARN', detail: detail.join('；') + residue }
 })
 
 const failed = results.filter((item) => item.level === 'FAIL').length
