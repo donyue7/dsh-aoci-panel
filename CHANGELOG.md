@@ -2,6 +2,27 @@
 
 本文件记录用户可见的变更。版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## 0.6.0 — 2026-10-28
+
+把 `dsh-aoci-bind` 并入本插件：面板与 Agent 接入工具合成一个包。
+
+### 合并
+
+- 新增 `lib/bind/`（11 个模块，零第三方依赖，源自 dsh-aoci-bind 0.1.0）：workspace 发现、绑定诊断与修复计划、
+  行级 YAML 补丁模型、备份与原子写入、aoci CLI seam、工具 schema 与摘要渲染。
+- 宿主半在 `tools` 服务可用时注册 4 个工具：`aoci_bind_status` / `aoci_bind_repair` /
+  `aoci_project_init` / `aoci_doctor`；工具服务缺失时只跳过注册，面板不受影响。
+- 配置新增嵌套字段 `bind`（字段与 dsh-aoci-bind 一致），装载期同样严格校验；
+  `bind.aociBinary` 留空时自动复用面板探测到的 aoci。
+- 测试新增 58 个用例（`test/bind/*.test.mjs`），覆盖 YAML 行模型、workspace 发现、
+  绑定诊断与修复计划、4 个工具与插件挂载；`npm test` 与 `npm run check` 全绿。
+- README 增补「AOCI 接入工具」章节、`bind` 配置与排障条目；`package.json` 摘要与关键词同步。
+
+### 升级
+
+- 已单独安装 `dsh-aoci-bind` 的 profile 请先卸载再升级本插件，避免重复注册同名工具。
+- 接入工具修复 / 新增的 MCP 绑定行仍需重启 DSH 才在会话工具表生效。
+
 ## 0.5.0 — 2026-10-25
 
 安装、更新、配置与维护全面转向 DSH 官方机制；面板功能保持不变。

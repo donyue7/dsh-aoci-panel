@@ -33,6 +33,7 @@ dsh plugin --profile desktop remove dsh-aoci-panel
 | 多工作区 | 一屏聚合所有注册 DSH 工作区的 AOCI 状态：是否 aligned / 需作者化 / Recovery / 待处理事务 / 报告待处理 / 条目数 / 各卷状态 / 最后 verify 时间与结果 / 绑定的 serverName 与工具命名空间；支持搜索与三种排序（名称 / 条目数 / 治理状态），点行展开单仓库深取详情 + 快捷动作 |
 | 单仓库 | 索引概览（项目、布局、条目数、各卷、composite_identity、基线、最近 verify、待处理报告、最近操作）；治理状态（对齐结论、漂移明细、预算水位、Scope 规则、Findings、CLI 通道）；条目浏览（按路径/标签/F 搜索，展开完整 `F / R / A / S`，标签按元卷词典解义） |
 | 绑定诊断 | 该仓库绑定的 MCP `serverName` 与工具命名空间（`mcp__<serverName>__`）；检测 serverName 冲突、未绑定、绑错仓库（`--repo` 不一致）、旧二进制（rc 版本落后）；一键「修复绑定」归一 command / `--repo`（写前备份，保留行 id 与 serverName）；给出可直接粘贴的 Agent 提示词（bootstrap / 绑定自检） |
+| 接入工具 | 合并自 `dsh-aoci-bind` 的 4 个 Agent 工具：`aoci_bind_status` / `aoci_bind_repair` / `aoci_project_init` / `aoci_doctor` —— 让 Agent 自己发现未绑定工作区、诊断与修复 MCP 绑定、初始化并体检（见「AOCI 接入工具」） |
 | 初始化 | 单仓库安装向导（未初始化仓库自动出现）+ 多工作区**批量初始化**（多选未初始化工作区，每仓库独立 serverName，顺序执行） |
 | 认知 | 回答「AOCI 对这个仓库做了什么、对开发者有什么用」：5 张价值卡（记忆覆盖 / 约束缺口 / 索引预算 / 治理状态 / 最近认知更新）+ 5 个子视图（变更账本 / 开发须知 / 认知地图 / 健康时间线 / 资产清单），全部来自仓库内既有产物，只读 |
 | 引导 | 顶部「引导」按钮：AOCI 概念、生命周期、面板区块说明、常用 CLI 命令速查 |
@@ -90,6 +91,23 @@ dsh plugin --profile desktop remove dsh-aoci-panel
 | 索引未对齐 / 待作者化 | `authoring`：aoci_rules → aoci_overview → 按 Guide 执行 Fresh Bootstrap 直到 aligned |
 | repair_required | `repair`：只修 findings 命中的 retry_scope，其余字节不变，重提同一完整批次 |
 | Recovery / 待处理事务 | `recovery`：按 Guide 的 stopped 处置规则（closure / Resume / Rollback），证据不足才停下请人工裁决 |
+
+## AOCI 接入工具（合并自 dsh-aoci-bind）
+
+面板负责给人看，四条工具负责让 Agent 自己发现、诊断、修复并初始化绑定。v0.6.0 起内置，
+不再需要单独安装 `dsh-aoci-bind`。
+
+| 工具 | 作用 |
+| --- | --- |
+| `aoci_bind_status` | 逐工作区诊断绑定：`bound` / `unbound` / `wrong_repo` / `name_conflict` / `duplicate_binding` / `no_index`；只读 |
+| `aoci_bind_repair` | 应用最小修复（补行 / 改 `--repo` / 改 serverName / 可选删孤儿行）：幂等、写前时间戳备份、YAML 校验失败拒绝写入 |
+| `aoci_project_init` | 对无索引仓库执行 `aoci init` + `aoci scan`、注册绑定，并返回带 `mcp__<serverName>__` 前缀与 root 自检的 bootstrap 提示词 |
+| `aoci_doctor` | 环境体检：CLI 可达性与版本、补丁是否合法、serverName 唯一、未绑定索引、孤儿行、workspace registry 可读性 |
+
+- 工具与面板共用同一套配置与补丁目标；`bind.enabled=false` 整体关闭，`bind.tools=false` 只关工具（面板仍可用）。
+- 每个工具返回结构化 JSON + 可读摘要；所有写入都限于 `cordis.patch.yml` 里的 MCP 绑定行，绝不改索引内容。
+- 工具修复 / 新增的绑定行需要**重启 DSH** 才会出现在会话工具表里（工具不会自行重启）。
+- 迁移：原来单独安装的 `dsh-aoci-bind` 可以卸载；两者同时安装会重复注册同名工具，建议只保留本插件。
 
 ## 安装 AOCI（初始化闭环）
 
@@ -203,13 +221,20 @@ pwsh -File scripts/install.ps1 -Mode uninstall
 | `updateCheckTimeoutMs` | `5000` | 更新检查超时（500–60000） |
 | `updateCheckTtlMs` | `21600000` | 更新检查结果的内存缓存（0–604800000） |
 | `profile` | `''` | 更新命令里的 profile；留空读 `DSH_PROFILE`，再回退 `desktop` |
+| `bind` | `{}` | 合并自 dsh-aoci-bind 的接入工具配置（字段见下） |
+
+`bind` 是唯一嵌套对象，字段沿用 `dsh-aoci-bind` 的设计：`enabled`（默认 `true`，整体开关）、
+`tools`（`true`，只关工具注册）、`promptSection`（`false`，是否在系统提示词加接入段）、
+`aociBinary`（留空 = 复用面板探测到的 aoci）、`home` / `profile` / `profileDir`、`legacyHome`（`auto`）、
+`syncProfilePatch`（`true`）、`serverNamePrefix`（`aoci`）、`scanRoots`（默认取已注册工作区的父目录）、
+`backupDir`（`<home>/aoci-bind/backups`）、`initTimeoutMs`（`180000`）、`probeTimeoutMs`（`20000`）。
 
 配置在装载时校验：类型错误、越界、非法 URL、拼错的字段都会让本行装载失败并在日志里报错，
 不会带着错误默认值继续运行。`/aoci-panel/about` 会回显实际生效的关键配置。
 
 ## 更新
 
-面板顶栏的 **`v0.5.0`** 按钮打开「插件版本与更新」卡片：当前版本、安装 profile、
+面板顶栏的 **`v0.6.0`** 按钮打开「插件版本与更新」卡片：当前版本、安装 profile、
 最新版本、检查时间与一条可复制的命令：
 
 ```powershell
@@ -258,6 +283,9 @@ GitHub Actions 的 `Market Index` 工作流会在这些时机重新生成并发�
 - **安装向导**：`GET /aoci-panel/install` 做只读预检；`POST /aoci-panel/install` 执行安装
   （body 带 `repos: [...]` 即批量模式；`aoci init` / `aoci scan` 走与治理事实相同的 CLI 通道；
   DSH 补丁行由宿主半经 `fs` 服务写入，home 与 profile 补丁目标都支持）。
+- **接入工具**：`aoci_bind_status` / `aoci_bind_repair` / `aoci_project_init` / `aoci_doctor`
+  走 `lib/bind/`，每次调用都重新读补丁文件与 workspace registry（无缓存，手工改完补丁立即反映）；
+  写入统一经过 `lib/bind/patchfiles.js`（时间戳备份 + 原子替换 + 写前写后 YAML 校验）。
 - **CLI 通道**：按最小权限优先逐级回退 —— `subprocess` 直接 argv → `shell` 默认策略 → `shell` 显式放行。
   命中的通道会被记住并显示在面板底部（`通道=…`），不会静默降级。
 - **缓存**：宿主按仓库在内存里缓存快照（单仓库深快照与工作区轻量状态分开缓存）。
@@ -283,6 +311,18 @@ dsh-aoci-panel
     ├── config.js        # 配置默认值、规格化与校验（装载期响亮失败）
     ├── about.js         # 版本比较、registry 更新检查、更新命令生成
     ├── cognition.js     # 认知数据层：条目/约束/目录聚合、git 变更账本、verify 时间线、资产清单（纯 Node，只读）
+    ├── bind/            # 合并自 dsh-aoci-bind 的 AOCI 接入工具（零第三方依赖）
+    │   ├── index.js     # 工具挂载入口：tools 服务可用时注册 4 个工具
+    │   ├── config.js    # 工具配置默认值与规格化
+    │   ├── tools.js     # 4 个工具的 schema、校验与摘要渲染
+    │   ├── binding.js   # 绑定诊断与修复计划（纯函数）
+    │   ├── discovery.js # workspace registry 与扫描根发现
+    │   ├── patchfiles.js# 补丁读取、时间戳备份、原子写入
+    │   ├── yamlpatch.js # 行级 YAML 补丁模型（只拼不重排）
+    │   ├── state.js     # 每次调用重建的只读快照
+    │   ├── aoci.js      # aoci CLI 子进程 seam（init / scan / version）
+    │   ├── toolkit.js   # 无依赖 ToolDefinition 构造与参数校验
+    │   └── prompt.js    # bootstrap 提示词
     └── client.js        # 浏览器半：window.__ModuleLoader__.load 注册 conversation.view 标签页
                          #         含多工作区总览、认知视图、绑定诊断、安装向导、批量初始化、版本/更新与引导卡片
 ```
@@ -359,6 +399,8 @@ CI（`.github/workflows/ci.yml`）在 Windows 与 Ubuntu 上都会跑。
 - 本地链接安装（`dsh plugin add <目录>`）是开发便利：`pnpm install`、插件市场装卸等操作可能把它换回
   真实目录，重跑一次 `dsh plugin add <目录>` 即可。正式使用请安装 registry 版本。
 - 更新检查依赖 npm registry 可达；企业镜像或离线环境可用 `registryUrl` / `updateCheck` 调整。
+- **接入工具依赖宿主 `tools` 服务**：Web 宿主默认具备；没有该服务时四条工具不注册，面板其余部分照常工作。
+  工具修复 / 新增的 MCP 绑定行仍需重启 DSH 才在会话工具表出现。
 
 ## 故障排查
 
@@ -375,6 +417,8 @@ CI（`.github/workflows/ci.yml`）在 Windows 与 Ubuntu 上都会跑。
 | 安装向导提示未探测到 aoci CLI | 确认本机有 aoci 可执行文件（官方仓库 [aoci-spec/aoci-code](https://github.com/aoci-spec/aoci-code)），或在向导里改「aoci 可执行目录」后重新检测 |
 | DSH 接入后工具没出现 | 确认重启过 DSH；用绑定诊断查行 id / `serverName` 是否与其他行重复；DSH 日志中搜 `dsh-mcp-client` |
 | 批量初始化某个仓库失败 | 看批量结果里该行的错误信息（单个失败不影响后续）；常见原因是目标仓库已有 aoci.txt 或 aoci init 退出码非 0 |
+| 会话里没有 `aoci_bind_status` 等接入工具 | 确认 DSH 版本带 `tools` 服务并已重启；`绑定诊断` 标签能出数据说明补丁本身可读；再用 `aoci_doctor` 查 CLI 与 YAML 合法性 |
+| 接入工具写补丁失败 | 看返回的 `errors`（多为 YAML 不合法或目标目录不可写）；备份在 `bind.backupDir`；YAML 校验失败时工具不会写入 |
 
 ## 许可证
 
