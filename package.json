@@ -1,7 +1,7 @@
 {
   "name": "dsh-aoci-panel",
-  "version": "0.6.0",
-  "description": "AOCI 认知面板：多工作区总览、认知视图（价值卡、变更账本、开发须知、认知地图、健康时间线、资产清单）、单仓库索引与治理状态、绑定诊断、快捷动作与提示词，并为未接入的项目提供单仓库与批量引导式初始化；内置 AOCI 接入工具（aoci_bind_status / aoci_bind_repair / aoci_project_init / aoci_doctor，合并自 dsh-aoci-bind），用于发现、诊断、修复 MCP 绑定并初始化未接入的仓库。",
+  "version": "0.7.0",
+  "description": "AOCI 认知面板：多工作区总览、认知视图（价值卡、变更账本、开发须知、认知地图、健康时间线、资产清单）、单仓库索引与治理状态、绑定诊断、索引文件管控（aoci.txt / aoci.meta.txt / aoci.code.txt 的可视化编辑、结构校验、备份与恢复）、快捷动作与提示词，并为未接入的项目提供单仓库与批量引导式初始化；内置 AOCI 接入工具（aoci_bind_status / aoci_bind_repair / aoci_project_init / aoci_doctor，合并自 dsh-aoci-bind），用于发现、诊断、修复 MCP 绑定并初始化未接入的仓库。",
   "type": "module",
   "author": "donyue7",
   "repository": {
@@ -24,7 +24,7 @@
     "install:registry": "pwsh -NoProfile -File scripts/install.ps1 -Mode registry",
     "uninstall": "pwsh -NoProfile -File scripts/install.ps1 -Mode uninstall",
     "market": "node scripts/market-index.mjs",
-    "test": "node --test scripts/test-cognition.mjs scripts/test-host.mjs test/bind/yamlpatch.test.mjs test/bind/discovery.test.mjs test/bind/binding.test.mjs test/bind/tools.test.mjs test/bind/plugin.test.mjs && node scripts/test-client-cognition.mjs"
+    "test": "node --test scripts/test-cognition.mjs scripts/test-host.mjs scripts/test-assets.mjs scripts/test-host-routes.mjs test/bind/yamlpatch.test.mjs test/bind/discovery.test.mjs test/bind/binding.test.mjs test/bind/tools.test.mjs test/bind/plugin.test.mjs && node scripts/test-client-cognition.mjs"
   },
   "exports": {
     ".": {
@@ -58,6 +58,7 @@
     "cordis",
     "plugin",
     "aoci",
+    "index",
     "mcp",
     "ui"
   ],

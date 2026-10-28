@@ -33,6 +33,7 @@ dsh plugin --profile desktop remove dsh-aoci-panel
 | 多工作区 | 一屏聚合所有注册 DSH 工作区的 AOCI 状态：是否 aligned / 需作者化 / Recovery / 待处理事务 / 报告待处理 / 条目数 / 各卷状态 / 最后 verify 时间与结果 / 绑定的 serverName 与工具命名空间；支持搜索与三种排序（名称 / 条目数 / 治理状态），点行展开单仓库深取详情 + 快捷动作 |
 | 单仓库 | 索引概览（项目、布局、条目数、各卷、composite_identity、基线、最近 verify、待处理报告、最近操作）；治理状态（对齐结论、漂移明细、预算水位、Scope 规则、Findings、CLI 通道）；条目浏览（按路径/标签/F 搜索，展开完整 `F / R / A / S`，标签按元卷词典解义） |
 | 绑定诊断 | 该仓库绑定的 MCP `serverName` 与工具命名空间（`mcp__<serverName>__`）；检测 serverName 冲突、未绑定、绑错仓库（`--repo` 不一致）、旧二进制（rc 版本落后）；一键「修复绑定」归一 command / `--repo`（写前备份，保留行 id 与 serverName）；给出可直接粘贴的 Agent 提示词（bootstrap / 绑定自检） |
+| 索引文件 | `aoci.txt` / `aoci.meta.txt` / `aoci.code.txt` 的可视化编辑：读取即做结构校验（首行、Format-Version、code 卷 / 字典、条目解析与重复 id、单文件 200 KiB 上限），保存前用 sha256 做 CAS（文件被别处改过就拒绝）+ 自动备份到 `.aoci/<文件名>.<时间戳>.bak`，可一键从备份恢复；只允许这三个受管资产，其余 AOCI 资产仍由 CLI / MCP 维护 |
 | 接入工具 | 合并自 `dsh-aoci-bind` 的 4 个 Agent 工具：`aoci_bind_status` / `aoci_bind_repair` / `aoci_project_init` / `aoci_doctor` —— 让 Agent 自己发现未绑定工作区、诊断与修复 MCP 绑定、初始化并体检（见「AOCI 接入工具」） |
 | 初始化 | 单仓库安装向导（未初始化仓库自动出现）+ 多工作区**批量初始化**（多选未初始化工作区，每仓库独立 serverName，顺序执行） |
 | 认知 | 回答「AOCI 对这个仓库做了什么、对开发者有什么用」：5 张价值卡（记忆覆盖 / 约束缺口 / 索引预算 / 治理状态 / 最近认知更新）+ 5 个子视图（变更账本 / 开发须知 / 认知地图 / 健康时间线 / 资产清单），全部来自仓库内既有产物，只读 |
@@ -77,6 +78,25 @@ dsh plugin --profile desktop remove dsh-aoci-panel
 指标（`sourceCount` / `coveragePct` / `budget*` / `aligned` / `driftCount` / `scope*`）一律为 `null`，
 **不会写成 0 或 false**，避免消费者把「没查到」误读成「0 源、未对齐」。由索引文本本身可得的数字
 （`entryCount` / `sEntries` / `sPresent` / `sPct`）与账本、约束、地图、资产视图照常可用。
+
+## 索引文件管控
+
+「索引文件」标签把 AOCI 的三个受管资产当成可直接编辑的文档来管：
+
+- **读取**：`GET /aoci-panel/assets?repo=` 返回正文、行数、字节、EOL、sha256、修改时间、历史备份与结构校验结果；
+  校验失败不会隐藏文件，只标出原因。
+- **保存**：`POST /aoci-panel/assets` 要求 `{ repo, name, content, expectedSha256 }`。宿主先做名称白名单与
+  sha256 CAS（不一致返回 `ASSET_CHANGED`，提示重新载入），再把内容归一为 LF、补齐末尾换行、跑结构校验
+  （`lib/assets.js`，口径与 `aoci verify` 同源），通过后才把旧内容备份到
+  `.aoci/<文件名>.<YYYYMMDD-HHmmss>.bak` 并写盘；任何一步失败都不落盘。
+- **恢复**：`POST /aoci-panel/assets/restore` 只接受 `.aoci/` 下同名前缀的 `.bak`，恢复前同样做结构校验，
+  并把当前内容另存一份备份。
+- **范围与边界**：只管 `aoci.txt`、`aoci.meta.txt`、`aoci.code.txt`；不改 `.aoci/baseline.json`、
+  `ledger.jsonl`、`verify_history`。保存成功后建议点顶栏「校验」（真实跑一次 `aoci verify`）让基线与内容
+  重新对齐，或按 AOCI Guide 让 Agent 走 maintain 收尾——面板不会替你改治理状态。
+- **校验口径**：根清单首行 / `Format-Version` / 至少一个 `kind=code` 卷；元卷首行 / `#[Tag dictionary: code]`
+  / 必需字典行；代码卷复用 `parseVolume` 逐行切 `F / R / A / S`，空卷报错、可疑标签与重复 id 给警告、
+  超过 200 KiB 直接拒绝。
 
 ## 快捷动作与提示词
 
@@ -306,11 +326,13 @@ dsh-aoci-panel
 ├── icon.svg             # 插件图标（≤256 KiB）
 ├── market/              # DSH 插件市场索引与图标（GitHub Pages 托管）
 └── lib
-    ├── index.js         # 宿主半：/aoci-panel/{state,cognition,entry,verify,workspaces,binding,about} 只读精确路由
+    ├── index.js         # 宿主半：/aoci-panel/{state,cognition,entry,verify,workspaces,binding,about,assets} 只读精确路由
     │                    #         + /aoci-panel/{install,action,fix-binding}（GET 预检 / POST 执行）
+    │                    #         + /aoci-panel/assets/restore（POST 备份恢复）
     ├── config.js        # 配置默认值、规格化与校验（装载期响亮失败）
     ├── about.js         # 版本比较、registry 更新检查、更新命令生成
     ├── cognition.js     # 认知数据层：条目/约束/目录聚合、git 变更账本、verify 时间线、资产清单（纯 Node，只读）
+    ├── assets.js        # 索引文件管控纯函数：名称白名单、EOL/行数/SHA-256、备份命名、三资产结构校验（可单测）
     ├── bind/            # 合并自 dsh-aoci-bind 的 AOCI 接入工具（零第三方依赖）
     │   ├── index.js     # 工具挂载入口：tools 服务可用时注册 4 个工具
     │   ├── config.js    # 工具配置默认值与规格化
@@ -324,7 +346,8 @@ dsh-aoci-panel
     │   ├── toolkit.js   # 无依赖 ToolDefinition 构造与参数校验
     │   └── prompt.js    # bootstrap 提示词
     └── client.js        # 浏览器半：window.__ModuleLoader__.load 注册 conversation.view 标签页
-                         #         含多工作区总览、认知视图、绑定诊断、安装向导、批量初始化、版本/更新与引导卡片
+                         #         含多工作区总览、认知视图、索引文件编辑、绑定诊断、安装向导、
+                         #         批量初始化、版本/更新与引导卡片
 ```
 
 - 宿主半是普通 Cordis 插件（`export { name, inject, apply }`），依赖 `webServer`；它只提供 JSON 端点，
@@ -344,12 +367,15 @@ pwsh -File scripts/install.ps1 -Mode registry  # 发布前用 registry 版本做
 npm run market                                 # 发布后刷新市场索引
 ```
 
-`npm test` 覆盖四层，全部离线、不启动 DSH：
+`npm test` 覆盖六层，全部离线、不启动 DSH：
 
 ```powershell
-node --test scripts/test-cognition.mjs   # 数据层：解析器 + 指标换算 + 本仓库只读采集（TEST_REPO 可覆盖）
-node --test scripts/test-host.mjs        # 宿主半：配置校验 / 版本比较 / 更新检查 / 市场索引
-node scripts/test-client-cognition.mjs   # 浏览器半：用微型 React 替身真实渲染 5 个子视图
+node --test scripts/test-cognition.mjs     # 数据层：解析器 + 指标换算 + 本仓库只读采集（TEST_REPO 可覆盖）
+node --test scripts/test-host.mjs          # 宿主半：配置校验 / 版本比较 / 更新检查 / 市场索引
+node --test scripts/test-assets.mjs        # 索引资产层：校验规则 / LF 归一 / 备份命名 / 本仓库三资产自校验
+node --test scripts/test-host-routes.mjs   # 宿主半端点：假 ctx 装载 apply()，资产读写 / CAS / 校验拒绝 / 备份恢复
+node --test test/bind/*.test.mjs           # 接入工具层：绑定补丁行模型 / 发现 / 工具注册（合并自 dsh-aoci-bind）
+node scripts/test-client-cognition.mjs     # 浏览器半：用微型 React 替身真实渲染 5 个子视图 + 索引文件视图
 ```
 
 ### 改动如何生效
@@ -386,9 +412,10 @@ CI（`.github/workflows/ci.yml`）在 Windows 与 Ubuntu 上都会跑。
 ## 已知限制
 
 - **Windows 桌面版专属**：路径探测、安装脚本与文档都按 Windows 桌面版设计；未验证 macOS / Linux。
-- **除安装向导与「修复绑定」外只读**：面板不写业务文件、不修改 `aoci.txt` / `.aoci` 正式资产；
-  显式触发的写入仅限目标仓库的 aoci init/scan 产物、可选的 DSH 补丁行追加/归一（备份 + 幂等 + 防碰撞，见上）；
-  「校验 / 快捷动作 verify」会让 aoci 自己追加 `.aoci/verify_history` 审计记录（该目录已被 `.aoci/.gitignore` 忽略）。
+- **写路径只有三类**：安装向导（aoci init/scan 产物与可选 DSH 补丁行）、修复绑定（补丁行归一）、
+  索引文件保存/恢复（三个受管索引 + `.aoci/` 时间戳备份，见「索引文件管控」）。除此之外面板只读：
+  不写业务文件、不改 `.aoci/baseline.json`；「校验 / 快捷动作 verify」会让 aoci 自己追加
+  `.aoci/verify_history` 审计记录（该目录已被 `.aoci/.gitignore` 忽略）。
 - DSH 补丁行追加/归一后需**重启 DSH** 才生效（组合在启动时装配）；面板各处会提醒。**面板绝不自行重启 DSH。**
 - 「修复绑定」只归一同一补丁文件里 `--repo` 指向该仓库的行的 command / `--repo`；
   serverName 冲突的**改名**不自动做（会改变会话里的工具命名空间），需人工裁决。
@@ -413,6 +440,8 @@ CI（`.github/workflows/ci.yml`）在 Windows 与 Ubuntu 上都会跑。
 | 治理数字可疑（业务源文件 = 0） | 典型沙箱拦截迹象：CLI 被围栏后无法枚举业务源清单，请以终端里手跑的 `aoci verify` 为准 |
 | 会话里拿不到某仓库的 aoci 工具 | 打开「绑定诊断」标签：看是否未绑定 / serverName 冲突 / 绑错仓库，按卡片给的修复动作处理；重启 DSH 后生效 |
 | 会话拿到了**别的仓库**的 aoci 工具 | 用绑定诊断里的「绑定自检」提示词核对 `runtime_repository_root`；多仓库并存时认准各自行的 `mcp__<serverName>__` 前缀，别用通用 `mcp__aoci__*` |
+| 保存索引文件被拒绝（`ASSET_CHANGED`） | 文件已被 aoci 或编辑器改过：点「重新载入」拿最新 sha 再保存；也可到 `.aoci/` 下用时间戳备份手工比对 |
+| 索引文件保存后治理仍报 drift | 面板只写文件、不改基线：点顶栏「校验」跑一次 `aoci verify`，或按 AOCI Guide 让 Agent 走 maintain 收尾 |
 | 顶部仓库下拉是空的 | 该 DSH 实例还没有注册过工作区 |
 | 安装向导提示未探测到 aoci CLI | 确认本机有 aoci 可执行文件（官方仓库 [aoci-spec/aoci-code](https://github.com/aoci-spec/aoci-code)），或在向导里改「aoci 可执行目录」后重新检测 |
 | DSH 接入后工具没出现 | 确认重启过 DSH；用绑定诊断查行 id / `serverName` 是否与其他行重复；DSH 日志中搜 `dsh-mcp-client` |

@@ -2,6 +2,27 @@
 
 本文件记录用户可见的变更。版本号遵循 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## 0.7.0 — 2026-10-28
+
+新增「索引文件」标签页：把 `aoci.txt` / `aoci.meta.txt` / `aoci.code.txt` 纳入面板直接管控。
+
+### 新增
+
+- 新标签「索引文件」：三个受管资产可直接编辑、保存、从备份恢复；展示行数 / 字节 / EOL / sha256 /
+  修改时间 / 历史备份与结构校验结果。
+- 宿主半新增 `GET|POST /aoci-panel/assets` 与 `POST /aoci-panel/assets/restore`：名称白名单、sha256 CAS、
+  LF 归一、写入前结构校验、`.aoci/<文件名>.<YYYYMMDD-HHmmss>.bak` 时间戳备份；失败不落盘。
+- 新模块 `lib/assets.js`：资产规格、EOL / 行数 / SHA-256 / 备份命名与三类资产校验（口径与 `aoci verify`
+  同源），纯函数、可单测。
+- 测试：`scripts/test-assets.mjs` 14 个用例（合法 / 非法样例、保存前规范化、上限、真实仓库自校验）；
+  客户端冒烟新增索引文件视图的读取 → 编辑 → 保存 → 切换文件 → 缺失文件路径。
+- README 增补「索引文件管控」章节、端点与限制说明；`package.json` 版本与摘要同步。
+
+### 边界
+
+- 只覆盖三个受管文件：不改 `.aoci/baseline.json` / `ledger.jsonl` / `verify_history`；
+  保存后需自行跑「校验」（`aoci verify`）或按 AOCI Guide 收尾，面板不会代改治理状态。
+
 ## 0.6.0 — 2026-10-28
 
 把 `dsh-aoci-bind` 并入本插件：面板与 Agent 接入工具合成一个包。

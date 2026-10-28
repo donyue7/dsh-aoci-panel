@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "AOCI Cognition Panel",
-    "description": "Views AOCI cognition, governance facts and MCP bindings for every workspace, initializes projects that have no AOCI index yet, and ships the AOCI integration tools (binding diagnosis/repair and doctor)."
+    "description": "Views AOCI cognition, governance facts and MCP bindings for every workspace, edits aoci.txt / aoci.meta.txt / aoci.code.txt with backups and restore, initializes projects that have no AOCI index yet, and ships the AOCI integration tools (binding diagnosis/repair and doctor)."
   }
 }
