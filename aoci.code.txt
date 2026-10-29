@@ -43,7 +43,7 @@ zh.json[FL3T]: F:插件中文显示元数据：meta.title「AOCI 认知面板」
 aoci.svg[OV4T]: F:市场索引使用的插件图标副本（与 icon.svg 同字节），随 market/ 部署到 GitHub Pages，供发现页卡片展示 | R:code:icon.svg,code:market/index.json,code:scripts/market-index.mjs | A:由 scripts/market-index.mjs 从 icon.svg 复制；market/index.json 的 icon 字段指向 icons/aoci.svg | S:不要单独编辑，改 icon.svg 后重新生成；必须位于 market/ 内否则 Pages 部署缺图
 
 ===C:/Users/19289/Desktop/dsh-aoci-panel/market/===
-index.json[OV4S]: F:DSH 插件市场索引（format 1）：声明分类 aoci、标签 cognition/governance/workspace，列 dsh-aoci-panel 的已发布版本（当前含 0.5.0）、发布时间与 engines.dsh | R:code:scripts/market-index.mjs,code:package.json,code:market/icons/aoci.svg | A:format=1；title/description 为 en/zh；versions[].source.type=npm，publishTimestamp 为 Unix 秒；0.7.0 未发布前不得手写进索引，发布后运行 npm run market 重新生成 | S:只列已发布到 npm 的版本；分类与标签先声明再引用；版本按时间倒序
+index.json[OV4S]: F:DSH 插件市场索引（format 1）：声明分类 aoci、标签 cognition/governance/workspace，列 dsh-aoci-panel 的已发布版本（当前含 0.7.0）、发布时间与 engines.dsh | R:code:scripts/market-index.mjs,code:package.json,code:market/icons/aoci.svg | A:format=1；title/description 为 en/zh；versions[].source.type=npm，publishTimestamp 为 Unix 秒；只由 npm run market 生成，发版后重新运行刷新，不手写版本 | S:只列已发布到 npm 的版本；分类与标签先声明再引用；版本按时间倒序
 
 ===C:/Users/19289/Desktop/dsh-aoci-panel/lib/bind/===
 aoci.js[IZ6S]: F:AOCI CLI 子进程 seam：有界调用外部 aoci（runAoci）、解析 --version、探测索引是否存在、init 与可选 scan 建索引，缺失二进制与非零退出都作为结果返回 | R:code:lib/bind/tools.js,code:lib/bind/index.js | A:runAoci 用 spawn 运行并设超时，结果含 ok/exitCode/stdout/stderr；parseVersion 取首行版本号；probeVersion 失败返回 null；hasIndex 只 stat aoci.txt；ensureIndex 先查索引再 init（可选 scan）；tail 截断长输出 | S:缺失二进制、超时与非零退出是正常结果而非抛异常（doctor 必须能如实报告）；stdout 属于协议/输出流，诊断日志不得混入；init 只在目标仓库没有 aoci.txt 时执行，避免覆盖既有索引
